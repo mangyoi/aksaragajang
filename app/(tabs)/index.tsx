@@ -1,74 +1,171 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const MainMenu = () => {
+  const router = useRouter();
+  // State untuk melacak tab aktif di bottom navbar
+  const [activeTab, setActiveTab] = useState('home');
 
-export default function HomeScreen() {
+  // Fungsi untuk handle ketika tab di bottom navbar ditekan
+  const handleTabPress = (tabName: string) => {
+    setActiveTab(tabName);
+    
+    // Navigasi ke screen yang sesuai berdasarkan tab
+    switch(tabName) {
+      case 'materi':
+        router.push('/materi');
+        break;
+      case 'home':
+        // Tetap di screen ini jika home yang ditekan
+        break;
+      case 'permainan':
+        // Arahkan ke halaman permainan
+        router.push('/gameA'); // Sesuaikan dengan rute permainan yang Anda inginkan
+        break;
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Image 
+          style={styles.catIcon}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+
+      <View style={styles.titleContainer}>
+        <Image 
+          source={require('../../assets/images/tampilan/mainmenu.png')}
+          style={styles.titleImage} 
+        />
+      </View>
+
+      <TouchableOpacity 
+        style={styles.materiCard}
+        onPress={() => router.push('/materi')}
+      >
+        <Text style={styles.materiTitle}>Materi</Text>
+        <Text style={styles.materiSubtitle}>kompolan carakan</Text>
+        <Text style={styles.materiSubtitle}>kalaban sowara</Text>
+      </TouchableOpacity>
+
+      <View style={styles.gridContainer}>
+        <View style={styles.row}>
+          <TouchableOpacity 
+            style={[styles.gridButton, styles.purpleButton]}
+            onPress={() => router.push('/kuis')}
+          >
+            <Text style={styles.buttonText}>Quis</Text>
+            <Text style={styles.buttonSubtext}>Analisis game</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.gridButton, styles.purpleButton]}
+            onPress={() => router.push('/gameA')}
+          >
+            <Text style={styles.buttonText}>Game 1</Text>
+            <Text style={styles.buttonSubtext}>Analisis game</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.row}>
+          <TouchableOpacity 
+            style={[styles.gridButton, styles.purpleButton]}
+            onPress={() => router.push('/gameB')}
+          >
+            <Text style={styles.buttonText}>Game 2</Text>
+            <Text style={styles.buttonSubtext}>Analisis game</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.gridButton, styles.purpleButton]}
+            onPress={() => router.push('/gameC')}
+          >
+            <Text style={styles.buttonText}>Game 3</Text>
+            <Text style={styles.buttonSubtext}>Analisis game</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Bottom Navigation Bar */}
+      {/* <BottomNavBar 
+        activeTab={activeTab} 
+        onTabPress={handleTabPress} 
+      /> */}
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+  },
+  header: {
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
+  catIcon: {
+    width: 40,
+    height: 40,
+  },
   titleContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 30,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  titleImage: {
+    width: 400,
+    height: 200,
+    resizeMode: 'contain',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  materiCard: {
+    backgroundColor: '#F7DA30',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 30,
+    alignItems: 'flex-start',
+    borderWidth: 2,         
+    borderColor: '#000000',
   },
+  materiTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 10,
+  },
+  materiSubtitle: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  gridContainer: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  gridButton: {
+    width: '48%',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  purpleButton: {
+    backgroundColor: '#7E80D8',
+    borderWidth: 2,         
+    borderColor: '#000000',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  buttonSubtext: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+  // Bisa ditambahkan style khusus untuk bottom navbar jika diperlukan
 });
+
+export default MainMenu;
