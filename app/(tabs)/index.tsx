@@ -4,27 +4,6 @@ import React, { useState } from 'react';
 
 const MainMenu = () => {
   const router = useRouter();
-  // State untuk melacak tab aktif di bottom navbar
-  const [activeTab, setActiveTab] = useState('home');
-
-  // Fungsi untuk handle ketika tab di bottom navbar ditekan
-  const handleTabPress = (tabName: string) => {
-    setActiveTab(tabName);
-    
-    // Navigasi ke screen yang sesuai berdasarkan tab
-    switch(tabName) {
-      case 'materi':
-        router.push('/materi');
-        break;
-      case 'home':
-        // Tetap di screen ini jika home yang ditekan
-        break;
-      case 'permainan':
-        // Arahkan ke halaman permainan
-        router.push('/gameA'); // Sesuaikan dengan rute permainan yang Anda inginkan
-        break;
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -84,12 +63,6 @@ const MainMenu = () => {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Bottom Navigation Bar */}
-      {/* <BottomNavBar 
-        activeTab={activeTab} 
-        onTabPress={handleTabPress} 
-      /> */}
     </SafeAreaView>
   );
 };
@@ -165,7 +138,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
   },
-  // Bisa ditambahkan style khusus untuk bottom navbar jika diperlukan
 });
 
 export default MainMenu;

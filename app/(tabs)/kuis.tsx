@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, Image, ScrollView } from 'react-native';
 
-// Define interfaces for our types
 interface Answer {
   id: number;
   text: string;
@@ -15,19 +14,14 @@ interface Question {
 }
 
 const QuizScreen: React.FC = () => {
-  // State untuk menyimpan pertanyaan saat ini (index)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   
-  // State untuk menyimpan jawaban yang dipilih untuk setiap pertanyaan
   const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: number | null}>({});
   
-  // State untuk melacak jika kuis sudah selesai
   const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
   
-  // State untuk menyimpan skor
   const [score, setScore] = useState<number>(0);
 
-  // Data 10 pertanyaan
   const questions: Question[] = [
     {
       id: 1,
@@ -141,10 +135,8 @@ const QuizScreen: React.FC = () => {
     }
   ];
 
-  // Pertanyaan saat ini
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Fungsi untuk memilih jawaban
   const handleAnswerSelect = (questionId: number, answerId: number) => {
     setSelectedAnswers({
       ...selectedAnswers,
@@ -152,26 +144,22 @@ const QuizScreen: React.FC = () => {
     });
   };
 
-  // Mendapatkan jawaban terpilih untuk pertanyaan saat ini
   const getCurrentSelectedAnswer = () => {
     return selectedAnswers[currentQuestion.id] || null;
   };
 
-  // Fungsi untuk pindah ke pertanyaan berikutnya
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
 
-  // Fungsi untuk kembali ke pertanyaan sebelumnya
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
 
-  // Fungsi untuk menghitung dan menampilkan skor
   const calculateScore = () => {
     let totalScore = 0;
     
@@ -185,7 +173,6 @@ const QuizScreen: React.FC = () => {
     setQuizCompleted(true);
   };
 
-  // Fungsi untuk memulai ulang kuis
   const restartQuiz = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
@@ -193,12 +180,10 @@ const QuizScreen: React.FC = () => {
     setScore(0);
   };
 
-  // Fungsi untuk memeriksa apakah semua pertanyaan sudah dijawab
   const allQuestionsAnswered = () => {
     return questions.every(question => selectedAnswers[question.id] !== undefined);
   };
 
-  // Tampilan hasil kuis
   if (quizCompleted) {
     return (
       <SafeAreaView style={styles.container}>
@@ -234,12 +219,10 @@ const QuizScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Carakan</Text>
       </View>
 
-      {/* Progress Bar / Question Indicator */}
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>
           Soal {currentQuestionIndex + 1} dari {questions.length}
@@ -254,12 +237,10 @@ const QuizScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Huruf Carakan Area */}
       <View style={styles.carakanContainer}>
         <Text style={styles.carakanText}>{currentQuestion.carakanText}</Text>
       </View>
 
-      {/* Question and Answers */}
       <ScrollView style={styles.contentContainer}>
         <Image 
           source={require('../../assets/images/tampilan/AstronoutQuis.png')} 
@@ -282,7 +263,6 @@ const QuizScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Navigation Buttons */}
       <View style={styles.bottomButtonContainer}>
         <TouchableOpacity 
           style={[styles.navButton, currentQuestionIndex === 0 && styles.disabledButton]}
@@ -310,7 +290,6 @@ const QuizScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Question Navigation Dots */}
       <View style={styles.dotsContainer}>
         {questions.map((question, index) => (
           <TouchableOpacity

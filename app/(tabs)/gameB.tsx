@@ -13,41 +13,32 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Interface untuk pilihan aksara
 interface AksaraOption {
   id: number;
-  image: any; // ImageSourcePropType
+  image: any;
   letter: string;
-  isCorrect: boolean; // Menandakan apakah ini jawaban yang benar
+  isCorrect: boolean;
 }
 
-// Interface untuk soal
 interface Question {
   id: number;
-  questionImage: any; // ImageSourcePropType untuk gambar soal
+  questionImage: any;
   options: AksaraOption[];
 }
 
 const NanMaenanGameScreen: React.FC = () => {
-  // State untuk menyimpan indeks soal saat ini
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   
-  // State untuk menyimpan total soal yang sudah dijawab benar
   const [correctAnswers, setCorrectAnswers] = useState(0);
 
-  // State untuk menyimpan pilihan jawaban
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
-  // State untuk modal alert
   const [alertVisible, setAlertVisible] = useState(false);
   
-  // State untuk mencatat apakah jawaban benar
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
   
-  // State untuk menampilkan modal selesai game
   const [gameCompleteModalVisible, setGameCompleteModalVisible] = useState(false);
 
-  // Data soal
   const questions: Question[] = [
     {
       id: 1,
@@ -63,7 +54,7 @@ const NanMaenanGameScreen: React.FC = () => {
           id: 2, 
           image: require('../../assets/images/tampilan/aksara/ca.png'), 
           letter: 'A',
-          isCorrect: true // Ini adalah jawaban yang benar untuk soal 1
+          isCorrect: true
         },
         { 
           id: 3, 
@@ -87,7 +78,7 @@ const NanMaenanGameScreen: React.FC = () => {
           id: 1, 
           image: require('../../assets/images/tampilan/aksara/ra.png'), 
           letter: 'C',
-          isCorrect: true // Ini adalah jawaban yang benar untuk soal 2
+          isCorrect: true
         },
         { 
           id: 2, 
@@ -129,7 +120,7 @@ const NanMaenanGameScreen: React.FC = () => {
           id: 3, 
           image: require('../../assets/images/tampilan/aksara/ta.png'), 
           letter: 'N',
-          isCorrect: true // Ini adalah jawaban yang benar untuk soal 3
+          isCorrect: true
         },
         { 
           id: 4, 
@@ -165,7 +156,7 @@ const NanMaenanGameScreen: React.FC = () => {
           id: 4, 
           image: require('../../assets/images/tampilan/aksara/a.png'), 
           letter: 'H',
-          isCorrect: true // Ini adalah jawaban yang benar untuk soal 4
+          isCorrect: true
         }
       ]
     },
@@ -189,7 +180,7 @@ const NanMaenanGameScreen: React.FC = () => {
           id: 3, 
           image: require('../../assets/images/tampilan/aksara/la.png'), 
           letter: 'N',
-          isCorrect: true // Ini adalah jawaban yang benar untuk soal 5
+          isCorrect: true
         },
         { 
           id: 4, 
@@ -201,58 +192,45 @@ const NanMaenanGameScreen: React.FC = () => {
     }
   ];
 
-  // Effect yang berjalan ketika pengguna memilih jawaban
   useEffect(() => {
     if (selectedOption !== null) {
-      // Cek apakah jawaban benar
       const currentOptions = questions[currentQuestionIndex].options;
       const selectedOptionData = currentOptions.find(option => option.id === selectedOption);
       const isCorrect = selectedOptionData?.isCorrect || false;
       
       setIsAnswerCorrect(isCorrect);
       
-      // Tampilkan alert
       setAlertVisible(true);
       
-      // Jika jawaban benar, tambahkan ke jumlah jawaban benar
       if (isCorrect) {
         setCorrectAnswers(prev => prev + 1);
       }
     }
   }, [selectedOption]);
 
-  // Fungsi untuk pindah ke soal berikutnya
   const goToNextQuestion = () => {
-    // Jika sudah di soal terakhir, tampilkan modal selesai
     if (currentQuestionIndex === questions.length - 1) {
       setGameCompleteModalVisible(true);
     } else {
-      // Pindah ke soal berikutnya
       setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-      // Reset pilihan jawaban
       setSelectedOption(null);
     }
   };
 
-  // Fungsi untuk memilih jawaban
   const handleOptionSelect = (optionId: number) => {
     setSelectedOption(optionId);
   };
 
-  // Fungsi untuk menutup alert
   const closeAlert = () => {
     setAlertVisible(false);
     
-    // Jika jawaban benar, pindah ke soal berikutnya setelah alert ditutup
     if (isAnswerCorrect) {
       goToNextQuestion();
     } else {
-      // Jika jawaban salah, reset pilihan sehingga user bisa memilih lagi
       setSelectedOption(null);
     }
   };
 
-  // Fungsi untuk mulai ulang permainan
   const restartGame = () => {
     setCurrentQuestionIndex(0);
     setCorrectAnswers(0);
@@ -260,26 +238,21 @@ const NanMaenanGameScreen: React.FC = () => {
     setGameCompleteModalVisible(false);
   };
 
-  // Mendapatkan soal saat ini
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header - Fixed at top */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Game</Text>
-        {/* Indikator soal (1/5, 2/5, dst) */}
         <Text style={styles.questionIndicator}>
           Soal {currentQuestionIndex + 1}/{questions.length}
         </Text>
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Game Title */}
         <Text style={styles.gameTitle}>Nan Maenan</Text>
         <Image 
           source={require('../../assets/images/tampilan/AstronoutGameB.png')} 
@@ -287,7 +260,6 @@ const NanMaenanGameScreen: React.FC = () => {
           resizeMode="contain"
         />
 
-        {/* Main Symbol Area - Soal */}
         <View style={styles.mainSymbolContainer}>
           <View style={styles.aksaraContainer}>
             <Image 
@@ -299,7 +271,6 @@ const NanMaenanGameScreen: React.FC = () => {
           <Text style={styles.aksaraLabel}>Isilah aksara yang hilang</Text>
         </View>
 
-        {/* Symbol Grid - Pilihan Jawaban */}
         <View style={styles.symbolGridContainer}>
           <Text style={styles.symbolGridTitle}>Pilih aksara yang tepat:</Text>
           <View style={styles.symbolGrid}>
@@ -329,11 +300,9 @@ const NanMaenanGameScreen: React.FC = () => {
           </View>
         </View>
         
-        {/* Add extra padding at bottom for scrolling */}
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Modal Alert dengan Gambar */}
       <Modal
         visible={alertVisible}
         transparent={true}
@@ -345,7 +314,6 @@ const NanMaenanGameScreen: React.FC = () => {
             styles.modalContainer,
             isAnswerCorrect ? styles.correctModalContainer : styles.incorrectModalContainer
           ]}>
-            {/* Gambar feedback */}
             <Image 
               source={
                 isAnswerCorrect
@@ -356,7 +324,6 @@ const NanMaenanGameScreen: React.FC = () => {
               resizeMode="contain"
             />
             
-            {/* Text feedback */}
             <Text style={[
               styles.modalText,
               isAnswerCorrect ? styles.correctText : styles.incorrectText
@@ -364,7 +331,6 @@ const NanMaenanGameScreen: React.FC = () => {
               {isAnswerCorrect ? 'Benar!' : 'Salah!'}
             </Text>
             
-            {/* Pesan khusus */}
             <Text style={styles.modalDetailText}>
               {isAnswerCorrect 
                 ? currentQuestionIndex < questions.length - 1 
@@ -373,7 +339,6 @@ const NanMaenanGameScreen: React.FC = () => {
                 : 'Silakan coba lagi.'}
             </Text>
             
-            {/* Tombol OK */}
             <TouchableOpacity
               style={[
                 styles.modalButton,
@@ -387,7 +352,6 @@ const NanMaenanGameScreen: React.FC = () => {
         </View>
       </Modal>
 
-      {/* Modal Game Complete */}
       <Modal
         visible={gameCompleteModalVisible}
         transparent={true}
@@ -440,7 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFD700', // Yellow header
+    backgroundColor: '#FFD700',
     paddingHorizontal: 15,
     paddingVertical: 10
   },
@@ -467,7 +431,7 @@ const styles = StyleSheet.create({
   },
   mainSymbolContainer: {
     width: '90%',
-    backgroundColor: '#7E80D8', // Light lavender background
+    backgroundColor: '#7E80D8',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
@@ -529,22 +493,21 @@ const styles = StyleSheet.create({
   correctAnswerButton: {
     borderWidth: 3,
     borderColor: '#4CAF50',
-    backgroundColor: '#C8E6C9' // Hijau muda
+    backgroundColor: '#C8E6C9'
   },
   wrongAnswerButton: {
     borderWidth: 3,
     borderColor: '#F44336',
-    backgroundColor: '#FFCDD2' // Merah muda
+    backgroundColor: '#FFCDD2'
   },
   aksaraOptionImage: {
     width: '80%',
     height: '80%',
   },
   bottomPadding: {
-    height: 20 // Extra padding at the bottom for better scrolling experience
+    height: 20
   },
   
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -608,7 +571,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   
-  // Game Complete Modal Styles
   gameCompleteContainer: {
     width: 300,
     backgroundColor: 'white',
@@ -617,7 +579,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#1E3A8A',
-    // backgroundColor: '#E3F2FD'
   },
   gameCompleteImage: {
     width: 150,

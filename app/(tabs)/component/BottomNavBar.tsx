@@ -1,7 +1,6 @@
-// ../app/(tabs)/component/BottomNavBar.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Pastikan Anda menginstal expo/vector-icons
+import { Ionicons } from '@expo/vector-icons'; 
 
 interface BottomNavBarProps {
   activeTab: string;
@@ -62,15 +61,15 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeTab, onTabPress }) =>
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#7DD3FC', // Warna biru muda seperti pada gambar
+    backgroundColor: '#7DD3FC', 
     paddingVertical: 10,
-    borderRadius: 100, // Membuat sudut sangat melengkung
+    borderRadius: 100, 
     marginHorizontal: 0,
     marginBottom: 0,
     marginTop: 10,
     justifyContent: 'space-around',
-    elevation: 5, // Untuk bayangan di Android
-    shadowColor: '#000', // Bayangan untuk iOS
+    elevation: 5, 
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,

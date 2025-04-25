@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Modal } from 'react-native';
 
-// Interface untuk pasangan kata
 interface WordPair {
   id: number;
   leftWord: string;
   rightWord: string;
 }
 
-// Interface untuk item yang ditampilkan
 interface WordItem {
   id: string;
   pairId: number;
@@ -16,15 +14,13 @@ interface WordItem {
   column: 'left' | 'right';
 }
 
-// Interface untuk level
 interface GameLevel {
   level: number;
   title: string;
   wordPairs: WordPair[];
-  timeLimit: number; // dalam detik
+  timeLimit: number;
 }
 
-// Interface untuk custom modal
 interface CustomModalProps {
   visible: boolean;
   title: string;
@@ -33,10 +29,9 @@ interface CustomModalProps {
   primaryButtonAction: () => void;
   secondaryButtonText?: string;
   secondaryButtonAction?: () => void;
-  imageSource: any; // untuk gambar .png
+  imageSource: any;
 }
 
-// Custom Modal Component dengan stabilitas yang ditingkatkan
 const CustomModal: React.FC<CustomModalProps> = ({
   visible,
   title,
@@ -47,7 +42,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
   secondaryButtonAction,
   imageSource
 }) => {
-  // Mencegah re-render yang tidak perlu
   const memoizedPrimaryAction = React.useCallback(() => {
     if (primaryButtonAction) {
       primaryButtonAction();
@@ -66,7 +60,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
       visible={visible}
       animationType="fade"
       onRequestClose={() => {}}
-      // Menambahkan hardwareAccelerated untuk meningkatkan performa di Android
       hardwareAccelerated={true}
     >
       <View style={styles.modalOverlay}>
@@ -83,7 +76,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
             <TouchableOpacity
               style={styles.modalPrimaryButton}
               onPress={memoizedPrimaryAction}
-              // Menambahkan activeOpacity untuk mencegah multiple taps
               activeOpacity={0.7}
             >
               <Text style={styles.modalPrimaryButtonText}>{primaryButtonText}</Text>
@@ -106,7 +98,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
 };
 
 const MatchingGameScreen: React.FC = () => {
-  // Data untuk semua level
   const gameLevels: GameLevel[] = [
     {
       level: 1,
@@ -170,7 +161,6 @@ const MatchingGameScreen: React.FC = () => {
     }
   ];
 
-  // State untuk level dan permainan
   const [currentLevelIndex, setCurrentLevelIndex] = useState<number>(0);
   const [leftItems, setLeftItems] = useState<WordItem[]>([]);
   const [rightItems, setRightItems] = useState<WordItem[]>([]);
@@ -181,7 +171,6 @@ const MatchingGameScreen: React.FC = () => {
   const [isGameActive, setIsGameActive] = useState<boolean>(false);
   const [allLevelsCompleted, setAllLevelsCompleted] = useState<boolean>(false);
   
-  // State untuk custom modal
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [modalTitle, setModalTitle] = useState<string>("");
   const [modalMessage, setModalMessage] = useState<string>("");
@@ -191,19 +180,15 @@ const MatchingGameScreen: React.FC = () => {
   const [modalSecondaryButtonAction, setModalSecondaryButtonAction] = useState<(() => void) | undefined>(undefined);
   const [modalImage, setModalImage] = useState(require('../../assets/images/tampilan/AstronoutGameA.png'));
   
-  // Level saat ini
   const currentLevel = gameLevels[currentLevelIndex];
 
-  // Auto mulai level 1 saat komponen di-mount
   useEffect(() => {
-    // Langsung mulai level 1 saat screen dibuka
     initializeLevel(0);
   }, []);
 
-  // Timer untuk permainan - dimodifikasi untuk menghindari race condition
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    let isMounted = true; // Flag untuk mengecek apakah komponen masih di-mount
+    let isMounted = true;
     
     if (isGameActive && timeRemaining > 0) {
       timer = setInterval(() => {
@@ -213,7 +198,6 @@ const MatchingGameScreen: React.FC = () => {
               if (timer) {
                 clearInterval(timer);
               }
-              // Jalankan handleGameOver di luar state update untuk menghindari race condition
               setTimeout(() => {
                 if (isMounted) {
                   handleGameOver();
@@ -227,23 +211,20 @@ const MatchingGameScreen: React.FC = () => {
       }, 1000);
     }
     
-    // Cleanup function
     return () => {
-      isMounted = false; // Tandai bahwa komponen sudah di-unmount
+      isMounted = false;
       if (timer) {
         clearInterval(timer);
       }
     };
-  }, [isGameActive]); // Hanya bergantung pada isGameActive, tidak pada timeRemaining
+  }, [isGameActive]);
 
-  // Cek apakah permainan selesai
   useEffect(() => {
     if (matchedPairs.length === currentLevel.wordPairs.length && matchedPairs.length > 0) {
       handleLevelComplete();
     }
   }, [matchedPairs, currentLevel]);
 
-  // Fungsi untuk menampilkan modal - menggunakan batch state updates
   const showModal = (
     title: string, 
     message: string, 
@@ -253,11 +234,9 @@ const MatchingGameScreen: React.FC = () => {
     secondaryButtonAction?: () => void,
     imageSource?: any
   ) => {
-    // Simpan action sebagai referensi fungsi daripada menciptakan fungsi baru
     const primaryAction = primaryButtonAction;
     const secondaryAction = secondaryButtonAction;
     
-    // Gunakan setTimeout untuk memastikan state updates tidak terjadi saat React sedang rendering
     setTimeout(() => {
       setModalTitle(title);
       setModalMessage(message);
@@ -282,15 +261,12 @@ const MatchingGameScreen: React.FC = () => {
     }, 0);
   };
 
-  // Fungsi untuk menyembunyikan modal
   const hideModal = () => {
-    // Gunakan setTimeout untuk menghindari konflik dengan React event queue
     setTimeout(() => {
       setIsModalVisible(false);
     }, 0);
   };
 
-  // Fungsi untuk mengacak array
   const shuffleArray = <T,>(array: T[]): T[] => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -300,11 +276,9 @@ const MatchingGameScreen: React.FC = () => {
     return shuffled;
   };
 
-  // Inisialisasi level
   const initializeLevel = (levelIndex: number) => {
     const level = gameLevels[levelIndex];
     
-    // Buat array untuk kolom kiri dan kanan
     const left = level.wordPairs.map((pair) => ({
       id: `left-${pair.id}`,
       pairId: pair.id,
@@ -319,11 +293,9 @@ const MatchingGameScreen: React.FC = () => {
       column: 'right' as const
     }));
 
-    // Acak posisi kata
     setLeftItems(shuffleArray(left));
     setRightItems(shuffleArray(right));
     
-    // Reset state permainan
     setSelectedItem(null);
     setMatchedPairs([]);
     setIsGameCompleted(false);
@@ -332,31 +304,23 @@ const MatchingGameScreen: React.FC = () => {
     setAllLevelsCompleted(false);
   };
 
-  // Mulai permainan dari level pertama
   const startGame = () => {
     setCurrentLevelIndex(0);
     setAllLevelsCompleted(false);
     initializeLevel(0);
   };
 
-  // Menangani level selesai - otomatis lanjut ke level berikutnya
   const handleLevelComplete = () => {
-    // Lebih aman untuk memisahkan state updates
     setIsGameActive(false);
     
-    // Berikan delay sebelum set game completed 
     setTimeout(() => {
       setIsGameCompleted(true);
       
-      // Jika masih ada level berikutnya
       if (currentLevelIndex < gameLevels.length - 1) {
         const nextLevelIndex = currentLevelIndex + 1;
         
-        // Gunakan custom modal sebagai pengganti Alert
-        // Buat fungsi handler di luar showModal untuk menghindari closure issues
         const handleNextLevel = () => {
           hideModal();
-          // Berikan jeda untuk memastikan modal tertutup sebelum mengubah state lain
           setTimeout(() => {
             setCurrentLevelIndex(nextLevelIndex);
             initializeLevel(nextLevelIndex);
@@ -370,13 +334,11 @@ const MatchingGameScreen: React.FC = () => {
           handleNextLevel,
           undefined,
           undefined,
-          require('../../assets/images/tampilan/AstronoutGameA.png') // Gunakan gambar sesuai kebutuhan
+          require('../../assets/images/tampilan/AstronoutGameA.png')
         );
       } else {
-        // Jika semua level sudah selesai
         setAllLevelsCompleted(true);
         
-        // Buat fungsi handler di luar showModal
         const handleRestart = () => {
           hideModal();
           setTimeout(() => {
@@ -384,7 +346,6 @@ const MatchingGameScreen: React.FC = () => {
           }, 100);
         };
         
-        // Gunakan custom modal sebagai pengganti Alert
         showModal(
           "Selamat!",
           "Kamu telah menyelesaikan semua level dengan sukses!",
@@ -392,19 +353,16 @@ const MatchingGameScreen: React.FC = () => {
           handleRestart,
           undefined,
           undefined,
-          require('../../assets/images/tampilan/AstronoutGameA.png') // Gunakan gambar sesuai kebutuhan
+          require('../../assets/images/tampilan/AstronoutGameA.png')
         );
       }
     }, 500);
   };
 
-  // Menangani game over (waktu habis)
   const handleGameOver = () => {
     setIsGameActive(false);
     
-    // Berikan delay kecil untuk menghindari state updates saat render
     setTimeout(() => {
-      // Buat handler functions terlebih dahulu
       const handleRetry = () => {
         hideModal();
         setTimeout(() => {
@@ -419,7 +377,6 @@ const MatchingGameScreen: React.FC = () => {
         }, 100);
       };
       
-      // Gunakan custom modal sebagai pengganti Alert
       showModal(
         "Waktu Habis!",
         `Kamu berhasil menemukan ${matchedPairs.length} dari ${currentLevel.wordPairs.length} pasangan.`,
@@ -427,40 +384,32 @@ const MatchingGameScreen: React.FC = () => {
         handleRetry,
         "Mulai Dari Awal",
         handleRestartGame,
-        require('../../assets/images/tampilan/AstronoutGameA.png') // Gunakan gambar waktu habis
+        require('../../assets/images/tampilan/AstronoutGameA.png')
       );
     }, 50);
   };
 
-  // Menangani pemilihan item
   const handleItemSelect = (item: WordItem) => {
-    // Jika permainan tidak aktif, abaikan
     if (!isGameActive) return;
     
-    // Jika sudah cocok, abaikan
     if (matchedPairs.includes(item.pairId)) {
       return;
     }
 
-    // Jika belum ada item yang dipilih sebelumnya
     if (selectedItem === null) {
       setSelectedItem(item);
       return;
     }
 
-    // Jika item yang sama dipilih dua kali atau dari kolom yang sama
     if (selectedItem.id === item.id || selectedItem.column === item.column) {
       setSelectedItem(item);
       return;
     }
 
-    // Cek apakah cocok
     if (selectedItem.pairId === item.pairId) {
-      // Match found
       setMatchedPairs([...matchedPairs, item.pairId]);
       setSelectedItem(null);
     } else {
-      // Tidak cocok, reset pemilihan setelah delay
       setSelectedItem(item);
       setTimeout(() => {
         setSelectedItem(null);
@@ -468,17 +417,14 @@ const MatchingGameScreen: React.FC = () => {
     }
   };
 
-  // Cek apakah item terpilih
   const isItemSelected = (item: WordItem) => {
     return selectedItem?.id === item.id;
   };
 
-  // Cek apakah item sudah dicocokkan
   const isItemMatched = (item: WordItem) => {
     return matchedPairs.includes(item.pairId);
   };
 
-  // Tampilan permainan selesai (semua level)
   const renderCompletionScreen = () => {
     return (
       <View style={styles.completionContainer}>
@@ -503,7 +449,6 @@ const MatchingGameScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Custom Modal */}
       <CustomModal
         visible={isModalVisible}
         title={modalTitle}
@@ -515,11 +460,9 @@ const MatchingGameScreen: React.FC = () => {
         imageSource={modalImage}
       />
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Carakan</Text>
         
-        {/* Tombol reset level hanya muncul jika permainan aktif dan belum semua level selesai */}
         {isGameActive && !allLevelsCompleted && (
           <TouchableOpacity 
             style={styles.resetLevelButton}
@@ -530,18 +473,15 @@ const MatchingGameScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Tampilan setelah semua level selesai */}
       {allLevelsCompleted ? (
         renderCompletionScreen()
       ) : (
         <>
-          {/* Game Title & Level */}
           <View style={styles.gameInfoContainer}>
             <Text style={styles.gameTitle}>Nan Maenan</Text>
             <Text style={styles.levelTitle}>{currentLevel.title}</Text>
           </View>
 
-          {/* Timer & Progress */}
           <View style={styles.gameStatus}>
             <View style={styles.timerContainer}>
               <Text style={[
@@ -559,16 +499,13 @@ const MatchingGameScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Game Instructions */}
           <Image 
             source={require('../../assets/images/tampilan/AstronoutGameA.png')} 
             style={styles.instructionImage} 
             resizeMode="contain"
           />
 
-          {/* Word Matching Area */}
           <View style={styles.matchingContainer}>
-            {/* Left Column */}
             <View style={styles.column}>
               {leftItems.map((item) => (
                 <TouchableOpacity
@@ -586,7 +523,6 @@ const MatchingGameScreen: React.FC = () => {
               ))}
             </View>
 
-            {/* Right Column */}
             <View style={styles.column}>
               {rightItems.map((item) => (
                 <TouchableOpacity
@@ -605,7 +541,6 @@ const MatchingGameScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={styles.restartButton}
@@ -802,7 +737,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
-  // Styles untuk tampilan setelah semua level selesai
   completionContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -839,7 +773,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1B4D89',
   },
-  // Styles untuk custom modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

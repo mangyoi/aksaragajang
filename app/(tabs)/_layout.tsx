@@ -17,7 +17,7 @@ export default function Layout() {
 
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);
-    if (tabName === 'home') router.push('/'); // push ke index.tsx
+    if (tabName === 'home') router.push('/'); 
     else if (tabName === 'materi') router.push('/(tabs)/materi');
     else if (tabName === 'permainan') router.push('/(tabs)/gameA');
   };

@@ -23,27 +23,24 @@ const sowaraData: SowaraItem[] = [
   { id: '1', letter: 'a' },
   { id: '2', letter: 'a' },
   { id: '3', letter: 'a' },
-  { id: '4', letter: null }, // This is the dots pattern for "other"
+  { id: '4', letter: null },
 ];
 
-// Sample data for Kaangguy Conto section
 const conto: ContoItem[] = [
   { id: '1', text: 'arapa' },
   { id: '2', text: 'arapa' },
   { id: '3', text: 'arapa' },
 ];
 
-// Data untuk halaman pop-up pronounce
 const pronounceData: PronounceItem[] = Array(20).fill(null).map((_, index) => ({
   id: index.toString(),
-  symbol: 'ᨕ',  // Ini adalah simbol contoh, ganti dengan simbol yang tepat
+  symbol: 'ᨕ',
   pronunciation: 'a'
 }));
 
 const CarakanApp = () => {
   const [pronounceModalVisible, setPronounceModalVisible] = useState(false);
 
-  // Render each Sowara item
   const renderSowaraItem = ({ item }: { item: SowaraItem }) => (
     <View style={styles.sowaraItem}>
       {item.letter ? (
@@ -51,7 +48,6 @@ const CarakanApp = () => {
           <Text style={styles.sowaraText}>{item.letter}</Text>
         </View>
       ) : (
-        // Lingkaran dengan 9 titik dibuat sebagai tombol
         <TouchableOpacity 
           style={styles.sowaraCircle}
           onPress={() => setPronounceModalVisible(true)}
@@ -66,11 +62,9 @@ const CarakanApp = () => {
     </View>
   );
 
-  // Render each Kaangguy Conto item
   const renderContoItem = (item: ContoItem) => (
     <View key={item.id} style={styles.contoRow}>
       <View style={styles.contoBox}>
-        {/* Replace with your actual Carakan script image */}
         
       </View>
       <View style={styles.contoTextContainer}>
@@ -79,7 +73,6 @@ const CarakanApp = () => {
     </View>
   );
 
-  // Render for pronunciation items in pop-up
   const renderPronounceItem = ({ item }: { item: PronounceItem }) => (
     <View style={styles.pronounceItem}>
       <Text style={styles.pronounceSymbol}>{item.symbol}</Text>
@@ -90,19 +83,13 @@ const CarakanApp = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerText}>Carakan</Text>
           <Image 
-            // source={require('./assets/cat-icon.png')} 
-            // style={styles.catIcon} 
-            // resizeMode="contain"
           />
         </View>
 
-        {/* Main content */}
         <View style={styles.contentContainer}>
-          {/* Gray box for Carakan Madura */}
           <View style={styles.imgBox}>
             <Image 
             source={require('../../assets/images/tampilan/carakan.png')}
@@ -110,7 +97,6 @@ const CarakanApp = () => {
             />
           </View>
           
-          {/* Sowara Section */}
           <Text style={styles.sectionTitle}>Sowara</Text>
           <FlatList
             data={sowaraData}
@@ -121,7 +107,6 @@ const CarakanApp = () => {
             scrollEnabled={false}
           />
           
-          {/* Kaangguy Conto Section */}
           <Text style={styles.sectionTitle}>Kaangguy Conto</Text>
           <View style={styles.contoContainer}>
             {conto.map(item => renderContoItem(item))}
@@ -129,7 +114,6 @@ const CarakanApp = () => {
         </View>
       </ScrollView>
 
-      {/* Modal Pop-up Pronunciation */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -138,7 +122,6 @@ const CarakanApp = () => {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            {/* Modal Header with close button */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>sowara aksara</Text>
               <TouchableOpacity
@@ -149,10 +132,8 @@ const CarakanApp = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Title for pronounce section */}
             <Text style={styles.pronounceTitle}>pece' kaangguy{'\n'}ngeding agi</Text>
 
-            {/* Grid layout for pronunciation items */}
             <FlatList
               data={pronounceData}
               renderItem={renderPronounceItem}
@@ -176,7 +157,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    backgroundColor: '#F7DA30', // Yellow color as specified
+    backgroundColor: '#F7DA30',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -186,7 +167,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#1B4D89', // Dark blue for text
+    color: '#1B4D89',
   },
   catIcon: {
     width: 40,
@@ -201,15 +182,15 @@ const styles = StyleSheet.create({
   },
   titleImage: {
     borderRadius: 12,
-    width: '132%', // Full width of container
-    height: undefined, // Allow dynamic height
-    aspectRatio: 2 / 1, // Adjusted to match the image's wider aspect ratio
+    width: '132%',
+    height: undefined,
+    aspectRatio: 2 / 1,
     resizeMode: 'contain',
   },
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1B4D89', // Dark blue
+    color: '#1B4D89',
     marginBottom: 16,
   },
   sowaraList: {
@@ -225,7 +206,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#7E80D8', // Correct purple color
+    backgroundColor: '#7E80D8',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -261,14 +242,14 @@ const styles = StyleSheet.create({
     width: 140,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#7E80D8', // Correct purple color
+    backgroundColor: '#7E80D8',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   contoTextContainer: {
     flex: 1,
-    alignItems: 'center', // Teks akan berada di tengah container
+    alignItems: 'center',
   },
   carakanScript: {
     width: 120,
@@ -276,13 +257,13 @@ const styles = StyleSheet.create({
   },
   contoText: {
     fontSize: 18,
-    color: '#1B4D89', // Dark blue
+    color: '#1B4D89',
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
     backgroundColor: 'white',
@@ -321,17 +302,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#615CB3', // Ungu sesuai dengan desain
+    color: '#615CB3',
     marginBottom: 20,
   },
   pronounceGrid: {
     paddingVertical: 10,
   },
   pronounceItem: {
-    width: (width * 0.9 - 40) / 4.5, // 4 item per row with padding
+    width: (width * 0.9 - 40) / 4.5,
     height: (width * 0.9 - 40) / 4.5,
-    backgroundColor: '#FFD700', // Yellow circle background
-    borderRadius: (width * 0.9 - 40) / 8, // Half of width to make circle
+    backgroundColor: '#FFD700',
+    borderRadius: (width * 0.9 - 40) / 8,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 5,
