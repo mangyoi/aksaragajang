@@ -25,7 +25,7 @@ const QuizScreen: React.FC = () => {
   const questions: Question[] = [
     {
       id: 1,
-      carakanText: 'ᮊᮞᮞᮔ᭄',
+      carakanText: '$$$$$$$',
       answers: [
         { id: 1, text: 'Pamacana' },
         { id: 2, text: 'Apana' },
@@ -36,7 +36,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 2,
-      carakanText: 'ᮋᮒᮔ᭄',
+      carakanText: '######',
       answers: [
         { id: 1, text: 'Katama' },
         { id: 2, text: 'Kelana' },
@@ -47,7 +47,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 3,
-      carakanText: 'ᮌᮂᮔ᭄',
+      carakanText: '000000',
       answers: [
         { id: 1, text: 'Gana' },
         { id: 2, text: 'Gahana' },
@@ -58,7 +58,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 4,
-      carakanText: 'ᮍᮒᮕ᭄',
+      carakanText: '12345',
       answers: [
         { id: 1, text: 'Natipa' },
         { id: 2, text: 'Ngatap' },
@@ -69,7 +69,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 5,
-      carakanText: 'ᮎᮎᮁ',
+      carakanText: '012012',
       answers: [
         { id: 1, text: 'Cacar' },
         { id: 2, text: 'Cacah' },
@@ -80,7 +80,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 6,
-      carakanText: 'ᮏᮔ᭄ᮒᮁ',
+      carakanText: '@@@@@@',
       answers: [
         { id: 1, text: 'Jambar' },
         { id: 2, text: 'Jantar' },
@@ -91,7 +91,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 7,
-      carakanText: 'ᮑᮕ',
+      carakanText: '&&&&&',
       answers: [
         { id: 1, text: 'Naya' },
         { id: 2, text: 'Nyapa' },
@@ -102,7 +102,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 8,
-      carakanText: 'ᮓᮕ᭄ᮒᮁ',
+      carakanText: '911',
       answers: [
         { id: 1, text: 'Daftar' },
         { id: 2, text: 'Daltar' },
@@ -113,7 +113,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 9,
-      carakanText: 'ᮗᮥᮂ',
+      carakanText: 'lorem',
       answers: [
         { id: 1, text: 'Wanga' },
         { id: 2, text: 'Waha' },
@@ -124,7 +124,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 10,
-      carakanText: 'ᮞᮍᮥ',
+      carakanText: 'lorem',
       answers: [
         { id: 1, text: 'Sangu' },
         { id: 2, text: 'Sanga' },

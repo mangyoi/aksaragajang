@@ -34,7 +34,7 @@ const conto: ContoItem[] = [
 
 const pronounceData: PronounceItem[] = Array(20).fill(null).map((_, index) => ({
   id: index.toString(),
-  symbol: 'ᨕ',
+  symbol: '#',
   pronunciation: 'a'
 }));
 

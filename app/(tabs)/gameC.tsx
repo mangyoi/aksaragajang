@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect  } from 'react';
 import {
   View,
   Text,
@@ -46,92 +46,179 @@ interface DropTarget {
   } | null;
 }
 
+interface Question {
+  id: number;
+  text: string;
+  items: DraggableItem[];
+  targets: DropTarget[];
+}
+
 const DragDropGameScreen = () => {
   const [activeItemId, setActiveItemId] = useState<number | null>(null);
-  
   const [allCorrect, setAllCorrect] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [completedQuestions, setCompletedQuestions] = useState<number[]>([]);
+  const [showNextButton, setShowNextButton] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
   
   const [feedbackModal, setFeedbackModal] = useState({
     visible: false,
     isCorrect: false,
     message: ""
   });
+
+  // Define all 4 questions
+  const questions: Question[] = [
+    // Question 1
+    {
+      id: 1,
+      text: "ACACA",
+      items: [
+        { id: 1, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' },
+        { id: 2, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'C' },
+        { id: 3, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' }
+      ],
+      targets: [
+        { id: 1, occupied: false, itemId: null, correctLetter: 'A', layout: null },
+        { id: 2, occupied: false, itemId: null, correctLetter: 'C', layout: null },
+        { id: 3, occupied: false, itemId: null, correctLetter: 'A', layout: null }
+      ]
+    },
+    // Question 2
+    {
+      id: 2,
+      text: "MADURA",
+      items: [
+        { id: 1, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'M' },
+        { id: 2, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' },
+        { id: 3, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'D' },
+        { id: 4, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'U' },
+        { id: 5, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'R' },
+        { id: 6, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' }
+      ],
+      targets: [
+        { id: 1, occupied: false, itemId: null, correctLetter: 'M', layout: null },
+        { id: 2, occupied: false, itemId: null, correctLetter: 'A', layout: null },
+        { id: 3, occupied: false, itemId: null, correctLetter: 'D', layout: null },
+        { id: 4, occupied: false, itemId: null, correctLetter: 'U', layout: null },
+        { id: 5, occupied: false, itemId: null, correctLetter: 'R', layout: null },
+        { id: 6, occupied: false, itemId: null, correctLetter: 'A', layout: null }
+      ]
+    },
+    // Question 3
+    {
+      id: 3,
+      text: "BHASA",
+      items: [
+        { id: 1, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'B' },
+        { id: 2, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'H' },
+        { id: 3, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' },
+        { id: 4, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'S' },
+        { id: 5, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' }
+      ],
+      targets: [
+        { id: 1, occupied: false, itemId: null, correctLetter: 'B', layout: null },
+        { id: 2, occupied: false, itemId: null, correctLetter: 'H', layout: null },
+        { id: 3, occupied: false, itemId: null, correctLetter: 'A', layout: null },
+        { id: 4, occupied: false, itemId: null, correctLetter: 'S', layout: null },
+        { id: 5, occupied: false, itemId: null, correctLetter: 'A', layout: null }
+      ]
+    },
+    // Question 4
+    {
+      id: 4,
+      text: "MADURA",
+      items: [
+        { id: 1, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'M' },
+        { id: 2, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' },
+        { id: 3, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'D' },
+        { id: 4, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'U' },
+        { id: 5, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'R' },
+        { id: 6, uri: require('../../assets/images/tampilan/aksara/a.png'), letter: 'A' }
+      ],
+      targets: [
+        { id: 1, occupied: false, itemId: null, correctLetter: 'M', layout: null },
+        { id: 2, occupied: false, itemId: null, correctLetter: 'A', layout: null },
+        { id: 3, occupied: false, itemId: null, correctLetter: 'D', layout: null },
+        { id: 4, occupied: false, itemId: null, correctLetter: 'U', layout: null },
+        { id: 5, occupied: false, itemId: null, correctLetter: 'R', layout: null },
+        { id: 6, occupied: false, itemId: null, correctLetter: 'A', layout: null }
+      ]
+    }
+  ];
+
+  // Current question data
+  const [currentQuestion, setCurrentQuestion] = useState<Question>(questions[0]);
+  const [draggableItems, setDraggableItems] = useState<DraggableItem[]>(questions[0].items);
+  const [dropTargets, setDropTargets] = useState<DropTarget[]>(questions[0].targets);
+
+  useLayoutEffect(() => {
+    measureTargets();
+  }, [dropTargets]);
   
-  const [draggableItems] = useState<DraggableItem[]>([
-    { 
-      id: 1, 
-      uri: require('../../assets/images/tampilan/aksara/a.png'),
-      letter: 'A'
-    },
-    { 
-      id: 2, 
-      uri: require('../../assets/images/tampilan/aksara/a.png'),
-      letter: 'C'
-    },
-    { 
-      id: 3, 
-      uri: require('../../assets/images/tampilan/aksara/a.png'),
-      letter: 'A'
-    }
-  ]);
-
-  const [dropTargets, setDropTargets] = useState<DropTarget[]>([
-    { 
-      id: 1, 
-      occupied: false, 
-      itemId: null,
-      correctLetter: 'A',
-      layout: null
-    },
-    { 
-      id: 2, 
-      occupied: false, 
-      itemId: null,
-      correctLetter: 'C',
-      layout: null
-    },
-    { 
-      id: 3, 
-      occupied: false, 
-      itemId: null,
-      correctLetter: 'A',
-      layout: null
-    }
-  ]);
-
+  // Refs for drop targets
   const containerRef = useRef(null);
-  const targetRefs = {
-    1: useRef(null),
-    2: useRef(null),
-    3: useRef(null)
-  };
+  const targetRefs = useRef({});
+
+  // Initialize targetRefs for the first question
+  useEffect(() => {
+    questions.forEach(question => {
+      question.targets.forEach(target => {
+        if (!targetRefs.current[target.id]) {
+          targetRefs.current[target.id] = React.createRef();
+        }
+      });
+    });
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const newTargets = [...dropTargets];
-      
-      dropTargets.forEach((target, index) => {
-        const ref = targetRefs[target.id];
-        if (ref && ref.current) {
-          ref.current.measure((x, y, width, height, pageX, pageY) => {
+    // Update question data when current question index changes
+    const question = questions[currentQuestionIndex];
+    setCurrentQuestion(question);
+    setDraggableItems(question.items);
+    setDropTargets(question.targets);
+    setAllCorrect(false);
+    setShowNextButton(false);
+    
+    // Reset layout measurements for new question
+    setTimeout(measureTargets, 500);
+  }, [currentQuestionIndex]);
+
+  const measureTargets = () => {
+    const newTargets = [...dropTargets];
+  
+    dropTargets.forEach((target, index) => {
+      const ref = targetRefs.current[target.id];
+      if (ref && ref.current) {
+        ref.current.measure((x, y, width, height, pageX, pageY) => {
+          if (pageX != null && pageY != null) {
             newTargets[index] = {
               ...target,
               layout: {
                 x: pageX,
                 y: pageY,
-                width,
-                height
-              }
+                width: width || 90,
+                height: height || 90,
+              },
             };
-            
-            if (index === dropTargets.length - 1) {
-              setDropTargets(newTargets);
-            }
-          });
-        }
-      });
-    }, 500);
-    
+            setDropTargets(newTargets);
+          }
+        });
+      }
+    });
+  };
+  
+  // Pemanggilan aman dengan setTimeout lebih panjang:
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      measureTargets();
+    }, 1000); // lebih lama untuk memastikan layout siap
+    return () => clearTimeout(timer);
+  }, [currentQuestion]);
+
+  useEffect(() => {
+    // Initial measurement of drop targets
+    const timer = setTimeout(measureTargets, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -157,11 +244,25 @@ const DragDropGameScreen = () => {
     
     if (isAllCorrect && !allCorrect) {
       setAllCorrect(true);
+      
+      // Add this question to completed questions
+      if (!completedQuestions.includes(currentQuestion.id)) {
+        setCompletedQuestions([...completedQuestions, currentQuestion.id]);
+      }
+      
+      // Show next button if there are more questions
+      if (currentQuestionIndex < questions.length - 1) {
+        setShowNextButton(true);
+      } else {
+        // All questions completed
+        setGameCompleted(true);
+      }
+      
       setTimeout(() => {
         setFeedbackModal({
           visible: true,
           isCorrect: true,
-          message: "Semua Benar!"
+          message: currentQuestionIndex < questions.length - 1 ? "Benar! Lanjutkan ke soal berikutnya." : "Semua Benar! Anda telah menyelesaikan semua soal!"
         });
       }, 300);
     }
@@ -171,6 +272,12 @@ const DragDropGameScreen = () => {
     const item = draggableItems.find(item => item.id === itemId);
     const target = dropTargets.find(target => target.id === targetId);
     
+    if (!target || !target.layout) {
+      resetPosition();
+      Alert.alert("Error", "Target layout belum siap. Silakan coba lagi.");
+      return;
+    }
+  
     if (!item || !target) return;
     
     const isCorrect = item.letter === target.correctLetter;
@@ -209,6 +316,13 @@ const DragDropGameScreen = () => {
     }
   };
 
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  // Draggable Item Component
   const DraggableItemComponent = ({ item }) => {
     const offset = useSharedValue({ x: 0, y: 0 });
     const scale = useSharedValue(1);
@@ -248,35 +362,42 @@ const DragDropGameScreen = () => {
         };
       })
       .onEnd((event) => {
-        isDragging.value = false;
-        scale.value = withTiming(1, { duration: 100 });
+        console.log("Gesture X,Y:", event.x, event.y);
+        console.log("Drop Targets:", dropTargets.map(t => t.layout));
         
+        if (!dropTargets.some(target => target.layout)) {
+          runOnJS(resetItemPosition)();
+          return;
+        }
+      
         let droppedOnTarget = false;
         let targetId = null;
-        
+      
+        const gestureX = event.x; // koordinat relatif terhadap GestureHandlerRootView
+        const gestureY = event.y;
+      
         for (const target of dropTargets) {
           if (target.occupied || !target.layout) continue;
-          
+      
           const { x, y, width, height } = target.layout;
-          
+      
           if (
-            event.absoluteX >= x && 
-            event.absoluteX <= x + width && 
-            event.absoluteY >= y && 
-            event.absoluteY <= y + height
+            gestureX >= x &&
+            gestureX <= x + width &&
+            gestureY >= y &&
+            gestureY <= y + height
           ) {
             droppedOnTarget = true;
             targetId = target.id;
             break;
           }
         }
-        
+      
         if (droppedOnTarget && targetId) {
           runOnJS(handleSuccessfulDrop)(item.id, targetId, setItemVisible, resetItemPosition);
         } else {
           resetItemPosition();
         }
-        
         runOnJS(setActiveItemId)(null);
       });
 
@@ -295,6 +416,7 @@ const DragDropGameScreen = () => {
     
     return (
       <GestureDetector gesture={panGesture}>
+        <View>
         <Animated.View 
           style={[styles.draggableItem, animatedStyle]}
         >
@@ -303,7 +425,9 @@ const DragDropGameScreen = () => {
             style={styles.aksaraImage}
             resizeMode="contain"
           />
+          <Text style={styles.letterText}>{item.letter}</Text>
         </Animated.View>
+        </View>
       </GestureDetector>
     );
   };
@@ -330,8 +454,13 @@ const DragDropGameScreen = () => {
             resizeMode="contain"
           />
           
-          {allCorrect && feedbackModal.isCorrect && (
-            <Text style={styles.modalMessageText}>Semua Benar!</Text>
+          {feedbackModal.message && (
+            <Text style={[
+              styles.modalMessageText,
+              feedbackModal.isCorrect ? styles.correctMessageText : styles.incorrectMessageText
+            ]}>
+              {feedbackModal.message}
+            </Text>
           )}
         </View>
       </View>
@@ -343,6 +472,9 @@ const DragDropGameScreen = () => {
       <SafeAreaView style={styles.safeArea} ref={containerRef}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Game</Text>
+          <Text style={styles.questionCounter}>
+            Soal {currentQuestionIndex + 1} dari {questions.length}
+          </Text>
         </View>
 
         <Text style={styles.gameTitle}>Nan Maenan</Text>
@@ -350,7 +482,7 @@ const DragDropGameScreen = () => {
         <Text style={styles.instructionText}>kagabay okara e baba reya</Text>
 
         <View style={styles.questionContainer}>
-          <Text style={styles.questionText}>ACACA</Text>
+          <Text style={styles.questionText}>{currentQuestion.text}</Text>
         </View>
 
         <Text style={styles.dropTargetLabel}>Tarik aksara dan letakkan di kotak di bawah ini:</Text>
@@ -359,18 +491,23 @@ const DragDropGameScreen = () => {
           {dropTargets.map(target => (
             <View 
               key={`target-${target.id}`}
-              ref={targetRefs[target.id]}
+              ref={targetRefs.current[target.id]}
               style={[
                 styles.dropTarget,
                 target.occupied && (target.isCorrect ? styles.correctTarget : styles.incorrectTarget)
               ]}
             >
               {target.occupied && target.itemId && target.isCorrect ? (
-                <Image 
-                  source={draggableItems.find(item => item.id === target.itemId)?.uri}
-                  style={styles.targetAksaraImage}
-                  resizeMode="contain"
-                />
+                <View style={styles.targetContent}>
+                  <Image 
+                    source={draggableItems.find(item => item.id === target.itemId)?.uri}
+                    style={styles.targetAksaraImage}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.targetLetterText}>
+                    {draggableItems.find(item => item.id === target.itemId)?.letter}
+                  </Text>
+                </View>
               ) : (
                 <Text style={styles.dropHereText}>Letakkan di sini</Text>
               )}
@@ -386,6 +523,23 @@ const DragDropGameScreen = () => {
             ))}
           </View>
         </View>
+
+        {showNextButton && (
+          <TouchableOpacity 
+            style={styles.nextButton}
+            onPress={goToNextQuestion}
+          >
+            <Text style={styles.nextButtonText}>Lanjut ke Soal Berikutnya</Text>
+          </TouchableOpacity>
+        )}
+
+        {gameCompleted && (
+          <View style={styles.gameCompletedContainer}>
+            <Text style={styles.gameCompletedText}>
+              Selamat! Anda telah menyelesaikan semua soal!
+            </Text>
+          </View>
+        )}
 
         <TouchableOpacity style={styles.homeButton}>
           <Text style={styles.homeButtonText}>utama</Text>
@@ -418,6 +572,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1B4D89'
+  },
+  questionCounter: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1B4D89'
   },
@@ -456,13 +615,14 @@ const styles = StyleSheet.create({
   },
   dropTargetRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
     width: '95%',
     marginBottom: 20
   },
   dropTarget: {
-    width: 90,
-    height: 90,
+    width: 80,
+    height: 80,
     backgroundColor: '#FFD700',
     borderRadius: 12,
     borderWidth: 4,
@@ -506,6 +666,7 @@ const styles = StyleSheet.create({
   draggableItemsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
     width: '100%',
     paddingVertical: 10
   },
@@ -522,12 +683,27 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   aksaraImage: {
-    width: 55,
-    height: 55
+    width: 45,
+    height: 45
+  },
+  letterText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1B4D89',
+    marginTop: 2
+  },
+  targetContent: {
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   targetAksaraImage: {
-    width: 60,
-    height: 60
+    width: 50,
+    height: 50
+  },
+  targetLetterText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1B4D89'
   },
   homeButton: {
     backgroundColor: '#1B4D89',
@@ -542,6 +718,35 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold'
   },
+  nextButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 10,
+    elevation: 3
+  },
+  nextButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  gameCompletedContainer: {
+    backgroundColor: '#E8F5E9',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+    alignItems: 'center'
+  },
+  gameCompletedText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    textAlign: 'center'
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -549,8 +754,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: 180,
-    height: 180,
+    width: 220,
+    height: 220,
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 20,
@@ -575,8 +780,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4CAF50',
     textAlign: 'center'
+  },
+  correctMessageText: {
+    color: '#4CAF50',
+  },
+  incorrectMessageText: {
+    color: '#F44336',
   }
 });
 
