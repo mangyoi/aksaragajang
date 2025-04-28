@@ -1,143 +1,210 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+  import React, { useState } from 'react';
+  import { 
+    View, 
+    Text, 
+    TextInput, 
+    TouchableOpacity, 
+    StyleSheet, 
+    Image, 
+    SafeAreaView,
+    // KeyboardAvoidingView,
+    Platform
+  } from 'react-native';
+  import { useRouter } from 'expo-router'; // import useRouter
 
-const MainMenu = () => {
-  const router = useRouter();
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+  const LoginScreen = () => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+  
+    const router = useRouter();
+
+    const [showPassword, setShowPassword] = useState(false);
+
+    return (
+      <SafeAreaView style={styles.container}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
         <Image 
-          style={styles.catIcon}
-        />
-      </View>
+            source={require('../../assets/images/tampilan/logoapl.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
 
-      <View style={styles.titleContainer}>
-        <Image 
-          source={require('../../assets/images/tampilan/mainmenu.png')}
-          style={styles.titleImage} 
-        />
-      </View>
+        {/* Login Card */}
+        <View style={styles.card}>
+          {/* Username Input */}
+          <View style={styles.inputContainer}>
+            <View style={styles.iconContainer}>
+              <Image 
+                source={require('../../assets/images/tampilan/icon/user.png')} 
+                style={styles.icon}
+                
+              />
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="nyama"
+              value={username}
+              onChangeText={setUsername}
+            />
+          </View>
 
-      <TouchableOpacity 
-        style={styles.materiCard}
-        onPress={() => router.push('/materi')}
-      >
-        <Text style={styles.materiTitle}>Materi</Text>
-        <Text style={styles.materiSubtitle}>kompolan carakan</Text>
-        <Text style={styles.materiSubtitle}>kalaban sowara</Text>
-      </TouchableOpacity>
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <View style={styles.iconContainer}>
+              <Image 
+                source={require('../../assets/images/tampilan/icon/locked-computer.png')} 
+                style={styles.icon}
+              />
+            </View>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="password"
+              secureTextEntry={!showPassword} // <- pakai state showPassword
+              value={password}
+              onChangeText={setPassword}
+            />
 
-      <View style={styles.gridContainer}>
-        <View style={styles.row}>
-          <TouchableOpacity 
-            style={[styles.gridButton, styles.purpleButton]}
-            onPress={() => router.push('/kuis')}
-          >
-            <Text style={styles.buttonText}>Quis</Text>
-            <Text style={styles.buttonSubtext}>Analisis game</Text>
+            {/* Tombol untuk show/hide password */}
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconContainer}>
+              <Image 
+                source={
+                  showPassword 
+                    ? require('../../assets/images/tampilan/icon/view.png') // buat gambar 'eye open'
+                    : require('../../assets/images/tampilan/icon/hide.png') // buat gambar 'eye closed'
+                }
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Login Button */}
+          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/mainmenu')}>
+            <Text style={styles.loginButtonText}>mayu ajer</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.gridButton, styles.purpleButton]}
-            onPress={() => router.push('/gameA')}
-          >
-            <Text style={styles.buttonText}>Game 1</Text>
-            <Text style={styles.buttonSubtext}>Analisis game</Text>
+
+          {/* Separator Text */}
+          <Text style={styles.separator}>otaba</Text>
+
+          {/* Google Login Button */}
+          <TouchableOpacity style={styles.googleButton}>
+            <Image 
+              // source={require('./assets/images/google-logo.png')} 
+              style={styles.googleLogo}
+            />
           </TouchableOpacity>
         </View>
-        <View style={styles.row}>
-          <TouchableOpacity 
-            style={[styles.gridButton, styles.purpleButton]}
-            onPress={() => router.push('/gameB')}
-          >
-            <Text style={styles.buttonText}>Game 2</Text>
-            <Text style={styles.buttonSubtext}>Analisis game</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.gridButton, styles.purpleButton]}
-            onPress={() => router.push('/gameC')}
-          >
-            <Text style={styles.buttonText}>Game 3</Text>
-            <Text style={styles.buttonSubtext}>Analisis game</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-};
+      </SafeAreaView>
+    );
+  };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-  },
-  header: {
-    alignItems: 'flex-end',
-    marginBottom: 20,
-  },
-  catIcon: {
-    width: 40,
-    height: 40,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  titleImage: {
-    width: 400,
-    height: 200,
-    resizeMode: 'contain',
-  },
-  materiCard: {
-    backgroundColor: '#F7DA30',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 30,
-    alignItems: 'flex-start',
-    borderWidth: 2,         
-    borderColor: '#000000',
-  },
-  materiTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 10,
-  },
-  materiSubtitle: {
-    fontSize: 16,
-    color: '#000000',
-  },
-  gridContainer: {
-    flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  gridButton: {
-    width: '48%',
-    padding: 20,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
-  purpleButton: {
-    backgroundColor: '#7E80D8',
-    borderWidth: 2,         
-    borderColor: '#000000',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  buttonSubtext: {
-    color: '#FFFFFF',
-    fontSize: 12,
-  },
-});
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#7B7EDE', // Warna background ungu muda
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logoContainer: {
+      marginBottom: 40,
+    },
+    logoImage: {
+      width: 150,
+      height: 150,
+    },
+    logoText: {
+      fontSize: 40,
+      fontWeight: 'bold',
+      color: '#F7DA30', // Warna kuning untuk logo G
+    },
+    logoSquare: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 15,
+      height: 15,
+      backgroundColor: '#F7DA30',
+      borderWidth: 1,
+      borderColor: 'black',
+    },
+    card: {
+      backgroundColor: 'white',
+      borderRadius: 30,
+      padding: 30,
+      width: '85%',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 25,
+      marginVertical: 10,
+      width: '100%',
+      height: 50,
+    },
+    iconContainer: {
+      padding: 10,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 50,
+    },
+    icon: {
+      width: 20,
+      height: 20,
+      opacity: 0.5,
+    },
+    input: {
+      flex: 1,
+      height: '100%',
+      padding: 10,
+    },
+    loginButton: {
+      backgroundColor: '#F7DA30', // Warna kuning untuk tombol
+      width: '100%',
+      height: 50,
+      borderRadius: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 20,
+    },
+    loginButtonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: 'black',
+    },
+    separator: {
+      marginVertical: 15,
+      color: '#777',
+    },
+    googleButton: {
+      width: 140,
+      height: 40,
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+    },
+    googleLogo: {
+      width: 100,
+      height: 20,
+      resizeMode: 'contain',
+    },
+  });
 
-export default MainMenu;
+  export default LoginScreen;

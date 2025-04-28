@@ -1,25 +1,26 @@
-import { Stack, useRouter, usePathname } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import BottomNavBar from './component/BottomNavBar';
+import { Stack, useRouter, usePathname } from "expo-router";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 
 export default function Layout() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [activeTab, setActiveTab] = useState('');
+  const [activeTab, setActiveTab] = useState("");
 
   useEffect(() => {
-    if (pathname.includes('/materi')) setActiveTab('materi');
-    else if (pathname.includes('/gameA')) setActiveTab('permainan');
-    else setActiveTab('home');
+    if (pathname.includes("/materi")) setActiveTab("materi");
+    else if (pathname.includes("/gameA")) setActiveTab("permainan");
+    else setActiveTab("home");
+
+    console.log("Current Pathname:", pathname);
   }, [pathname]);
 
   const handleTabPress = (tabName: string) => {
     setActiveTab(tabName);
-    if (tabName === 'home') router.push('/'); 
-    else if (tabName === 'materi') router.push('/(tabs)/materi');
-    else if (tabName === 'permainan') router.push('/(tabs)/gameA');
+    if (tabName === "home") router.push("/");
+    else if (tabName === "materi") router.push("/(tabs)/materi");
+    else if (tabName === "permainan") router.push("/(tabs)/gameA");
   };
 
   return (
@@ -27,12 +28,6 @@ export default function Layout() {
       <View style={styles.content}>
         <Stack screenOptions={{ headerShown: false }} />
       </View>
-
-      {!pathname.includes('kuis') && (
-        <View style={styles.navbarWrapper}>
-          <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
-        </View>
-      )}
     </View>
   );
 }
@@ -43,13 +38,5 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingBottom: 80,
-  },
-  navbarWrapper: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    zIndex: 10,
   },
 });
