@@ -23,6 +23,8 @@ import {
   GestureDetector,
   GestureHandlerRootView
 } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -60,6 +62,7 @@ const DragDropGameScreen = () => {
   const [completedQuestions, setCompletedQuestions] = useState<number[]>([]);
   const [showNextButton, setShowNextButton] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
+  const router = useRouter();
   
   const [feedbackModal, setFeedbackModal] = useState({
     visible: false,
@@ -541,7 +544,7 @@ const DragDropGameScreen = () => {
           </View>
         )}
 
-        <TouchableOpacity style={styles.homeButton}>
+        <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/mainmenu')}>
           <Text style={styles.homeButtonText}>utama</Text>
         </TouchableOpacity>
         

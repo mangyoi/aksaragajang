@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
+
 
 interface WordPair {
   id: number;
@@ -98,6 +100,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
 };
 
 const MatchingGameScreen: React.FC = () => {
+  const router = useRouter();
   const gameLevels: GameLevel[] = [
     {
       level: 1,
@@ -549,9 +552,7 @@ const MatchingGameScreen: React.FC = () => {
               <Text style={styles.buttonText}>Mulai Ulang</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.homeButton}
-            >
+            <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/mainmenu')}>
               <Text style={styles.buttonText}>Utama</Text>
             </TouchableOpacity>
           </View>

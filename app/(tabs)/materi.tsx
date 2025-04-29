@@ -1,51 +1,83 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, View, Text, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 interface SowaraItem {
   id: string;
-  letter: string | null;
+  imageSource: any | null;
 }
 
 interface ContoItem {
   id: string;
   text: string;
+  imageSource: any; 
 }
 
 interface PronounceItem {
   id: string;
-  symbol: string;
-  pronunciation: string;
+  imageSource: any;
 }
 
+// Updated sowaraData with Carakan script images
 const sowaraData: SowaraItem[] = [
-  { id: '1', letter: 'a' },
-  { id: '2', letter: 'a' },
-  { id: '3', letter: 'a' },
-  { id: '4', letter: null },
+  { 
+    id: '1', 
+    imageSource: require('../../assets/images/tampilan/aksara/a.png')
+  },
+  { 
+    id: '2', 
+    imageSource: require('../../assets/images/tampilan/aksara/na.png')
+  },
+  { 
+    id: '3', 
+    imageSource: require('../../assets/images/tampilan/aksara/ca.png')
+  },
+  { 
+    id: '4', 
+    imageSource: null
+  },
 ];
 
+
+// Conto data with image sources
 const conto: ContoItem[] = [
-  { id: '1', text: 'arapa' },
-  { id: '2', text: 'arapa' },
-  { id: '3', text: 'arapa' },
+  { 
+    id: '1', 
+    text: 'arapa',
+    imageSource: require('../../assets/images/tampilan/contoh/conto.png')  
+  },
+  { 
+    id: '2', 
+    text: 'nagara',
+    imageSource: require('../../assets/images/tampilan/contoh/conto2.png')  
+  },
+  { 
+    id: '3', 
+    text: 'kaca',
+    imageSource: require('../../assets/images/tampilan/contoh/conto3.png')  
+  },
 ];
 
+// Updated pronounceData with Carakan script images
 const pronounceData: PronounceItem[] = Array(20).fill(null).map((_, index) => ({
   id: index.toString(),
-  symbol: '#',
-  pronunciation: 'a'
+  imageSource: require('../../assets/images/tampilan/aksara/a.png') // Using the same image for all items
 }));
 
 const CarakanApp = () => {
   const [pronounceModalVisible, setPronounceModalVisible] = useState(false);
+  const router = useRouter();
 
   const renderSowaraItem = ({ item }: { item: SowaraItem }) => (
     <View style={styles.sowaraItem}>
-      {item.letter ? (
+      {item.imageSource ? (
         <View style={styles.sowaraCircle}>
-          <Text style={styles.sowaraText}>{item.letter}</Text>
+          <Image 
+            source={item.imageSource}
+            style={styles.sowaraImage}
+          />
         </View>
       ) : (
         <TouchableOpacity 
@@ -65,7 +97,10 @@ const CarakanApp = () => {
   const renderContoItem = (item: ContoItem) => (
     <View key={item.id} style={styles.contoRow}>
       <View style={styles.contoBox}>
-        
+        <Image 
+          source={item.imageSource}
+          style={styles.contoImage}
+        />
       </View>
       <View style={styles.contoTextContainer}>
         <Text style={styles.contoText}>{item.text}</Text>
@@ -75,8 +110,10 @@ const CarakanApp = () => {
 
   const renderPronounceItem = ({ item }: { item: PronounceItem }) => (
     <View style={styles.pronounceItem}>
-      <Text style={styles.pronounceSymbol}>{item.symbol}</Text>
-      <Text style={styles.pronounceLetter}>{item.pronunciation}</Text>
+      <Image 
+        source={item.imageSource}
+        style={styles.pronounceImage}
+      />
     </View>
   );
 
@@ -85,15 +122,26 @@ const CarakanApp = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Carakan</Text>
-          <Image 
-          />
+          <View style={styles.rightHeaderSpace} />
         </View>
 
         <View style={styles.contentContainer}>
+          {/* Back button at the top */}
+          <TouchableOpacity 
+            onPress={() => router.push('/mainmenu')} 
+            style={styles.backButton}
+          >
+            <Image 
+              source={require('../../assets/images/tampilan/icon/left-arrow.png')}
+              style={styles.backIcon}
+            />
+          </TouchableOpacity>
+          
+          {/* Main image now below the back button */}
           <View style={styles.imgBox}>
             <Image 
-            source={require('../../assets/images/tampilan/carakan.png')}
-            style={styles.titleImage}
+              source={require('../../assets/images/tampilan/carakan.png')}
+              style={styles.titleImage}
             />
           </View>
           
@@ -164,14 +212,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 16, 
+    alignSelf: 'flex-start', 
+  },
+  backIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
   headerText: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#1B4D89',
   },
-  catIcon: {
+  rightHeaderSpace: {
     width: 40,
-    height: 40,
   },
   contentContainer: {
     padding: 16,
@@ -179,6 +249,8 @@ const styles = StyleSheet.create({
   imgBox: {
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8, 
+    marginBottom: 16, 
   },
   titleImage: {
     borderRadius: 12,
@@ -209,6 +281,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#7E80D8',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sowaraImage: {
+    width: 60,
+    height: 60,
+    resizeMode: 'contain',
   },
   sowaraText: {
     fontSize: 22,
@@ -245,15 +322,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#7E80D8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    // marginRight: 16,
+    marginLeft: 30,
+    overflow: 'hidden', // Ensures image stays within borders
+  },
+  contoImage: {
+    width: '200%',
+    height: '200%',
+    resizeMode: 'cover',
   },
   contoTextContainer: {
     flex: 1,
     alignItems: 'center',
-  },
-  carakanScript: {
-    width: 120,
-    height: 30,
   },
   contoText: {
     fontSize: 18,
@@ -318,6 +398,11 @@ const styles = StyleSheet.create({
     margin: 5,
     borderWidth: 1,
     borderColor: '#000',
+  },
+  pronounceImage: {
+    width: '60%',
+    height: '60%',
+    resizeMode: 'contain',
   },
   pronounceSymbol: {
     fontSize: 24,

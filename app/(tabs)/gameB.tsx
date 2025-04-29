@@ -10,6 +10,7 @@ import {
   ScrollView,
   Modal
 } from 'react-native';
+import { useRouter } from 'expo-router'; 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -27,6 +28,7 @@ interface Question {
 }
 
 const NanMaenanGameScreen: React.FC = () => {
+  const router = useRouter();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   
   const [correctAnswers, setCorrectAnswers] = useState(0);
@@ -379,7 +381,7 @@ const NanMaenanGameScreen: React.FC = () => {
                 <Text style={styles.gameCompleteButtonText}>Main Lagi</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={[styles.gameCompleteButton, styles.homeButton]}>
+              <TouchableOpacity style={[styles.gameCompleteButton, styles.homeButton]} onPress={() => router.push('/mainmenu')}>
                 <Text style={styles.gameCompleteButtonText}>Menu Utama</Text>
               </TouchableOpacity>
             </View>

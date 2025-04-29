@@ -7,10 +7,10 @@
     StyleSheet, 
     Image, 
     SafeAreaView,
-    // KeyboardAvoidingView,
+    KeyboardAvoidingView,
     Platform
   } from 'react-native';
-  import { useRouter } from 'expo-router'; // import useRouter
+  import { useRouter } from 'expo-router'; 
 
 
   const LoginScreen = () => {
@@ -23,7 +23,6 @@
 
     return (
       <SafeAreaView style={styles.container}>
-        {/* Logo */}
         <View style={styles.logoContainer}>
         <Image 
             source={require('../../assets/images/tampilan/logoapl.png')}
@@ -32,9 +31,7 @@
           />
         </View>
 
-        {/* Login Card */}
         <View style={styles.card}>
-          {/* Username Input */}
           <View style={styles.inputContainer}>
             <View style={styles.iconContainer}>
               <Image 
@@ -63,33 +60,29 @@
             <TextInput
               style={styles.input}
               placeholder="password"
-              secureTextEntry={!showPassword} // <- pakai state showPassword
+              secureTextEntry={!showPassword} 
               value={password}
               onChangeText={setPassword}
             />
 
-            {/* Tombol untuk show/hide password */}
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconContainer}>
               <Image 
                 source={
                   showPassword 
-                    ? require('../../assets/images/tampilan/icon/view.png') // buat gambar 'eye open'
-                    : require('../../assets/images/tampilan/icon/hide.png') // buat gambar 'eye closed'
+                    ? require('../../assets/images/tampilan/icon/view.png') 
+                    : require('../../assets/images/tampilan/icon/hide.png') 
                 }
                 style={styles.icon}
               />
             </TouchableOpacity>
           </View>
 
-          {/* Login Button */}
           <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/mainmenu')}>
             <Text style={styles.loginButtonText}>mayu ajer</Text>
           </TouchableOpacity>
 
-          {/* Separator Text */}
           <Text style={styles.separator}>otaba</Text>
 
-          {/* Google Login Button */}
           <TouchableOpacity style={styles.googleButton}>
             <Image 
               // source={require('./assets/images/google-logo.png')} 
@@ -104,7 +97,7 @@
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#7B7EDE', // Warna background ungu muda
+      backgroundColor: '#7B7EDE', 
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -115,11 +108,7 @@
       width: 150,
       height: 150,
     },
-    logoText: {
-      fontSize: 40,
-      fontWeight: 'bold',
-      color: '#F7DA30', // Warna kuning untuk logo G
-    },
+  
     logoSquare: {
       position: 'absolute',
       top: 0,
@@ -173,7 +162,7 @@
       padding: 10,
     },
     loginButton: {
-      backgroundColor: '#F7DA30', // Warna kuning untuk tombol
+      backgroundColor: '#F7DA30', 
       width: '100%',
       height: 50,
       borderRadius: 25,
