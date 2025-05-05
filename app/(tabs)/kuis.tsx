@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, Image, ScrollView } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  StyleSheet, 
+  Image, 
+  ScrollView
+} from 'react-native';
+import { useRouter } from 'expo-router'; // Import useRouter
 
 interface Answer {
   id: number;
@@ -14,6 +23,7 @@ interface Question {
 }
 
 const QuizScreen: React.FC = () => {
+  const router = useRouter(); // Initialize router
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   
   const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: number | null}>({});
@@ -25,89 +35,89 @@ const QuizScreen: React.FC = () => {
   const questions: Question[] = [
     {
       id: 1,
-      carakanText: '$$$$$$$',
+      carakanText: 'ꦲꦫꦥ',
       answers: [
         { id: 1, text: 'Pamacana' },
         { id: 2, text: 'Apana' },
-        { id: 3, text: 'Kasana' },
-        { id: 4, text: 'Kulana' }
+        { id: 3, text: 'Arapa' },
+        { id: 4, text: 'Anapa' }
       ],
       correctAnswerId: 3
     },
     {
       id: 2,
-      carakanText: '######',
+      carakanText: 'ꦥꦩꦕꦤ',
       answers: [
-        { id: 1, text: 'Katama' },
-        { id: 2, text: 'Kelana' },
-        { id: 3, text: 'Katana' },
-        { id: 4, text: 'Ketana' }
+        { id: 1, text: 'Arapa' },
+        { id: 2, text: 'Calana' },
+        { id: 3, text: 'Pamacana' },
+        { id: 4, text: 'Nagara' }
       ],
       correctAnswerId: 3
     },
     {
       id: 3,
-      carakanText: '000000',
+      carakanText: 'ꦤ꧀ꦪꦩꦤ',
       answers: [
-        { id: 1, text: 'Gana' },
-        { id: 2, text: 'Gahana' },
-        { id: 3, text: 'Guna' },
-        { id: 4, text: 'Gona' }
+        { id: 1, text: 'Nyamana' },
+        { id: 2, text: 'Sapana' },
+        { id: 3, text: 'Nagara' },
+        { id: 4, text: 'Pamacana' }
       ],
       correctAnswerId: 1
     },
     {
       id: 4,
-      carakanText: '12345',
+      carakanText: 'ꦱꦥꦤ',
       answers: [
-        { id: 1, text: 'Natipa' },
-        { id: 2, text: 'Ngatap' },
-        { id: 3, text: 'Ngatep' },
-        { id: 4, text: 'Ngutap' }
+        { id: 1, text: 'Arapa' },
+        { id: 2, text: 'Sapana' },
+        { id: 3, text: 'Pamacana' },
+        { id: 4, text: 'Nyamana' }
       ],
       correctAnswerId: 2
     },
     {
       id: 5,
-      carakanText: '012012',
+      carakanText: 'ꦲꦤꦥ',
       answers: [
-        { id: 1, text: 'Cacar' },
-        { id: 2, text: 'Cacah' },
-        { id: 3, text: 'Carah' },
-        { id: 4, text: 'Calak' }
+        { id: 1, text: 'Anapa' },
+        { id: 2, text: 'Arapa' },
+        { id: 3, text: 'Atapa' },
+        { id: 4, text: 'Apasa' }
       ],
       correctAnswerId: 1
     },
     {
       id: 6,
-      carakanText: '@@@@@@',
+      carakanText: 'ꦱꦺꦴꦏꦺꦴꦤ',
       answers: [
-        { id: 1, text: 'Jambar' },
-        { id: 2, text: 'Jantar' },
-        { id: 3, text: 'Jantur' },
-        { id: 4, text: 'Jatkar' }
+        { id: 1, text: 'Contona' },
+        { id: 2, text: 'Sokona' },
+        { id: 3, text: 'Gulana' },
+        { id: 4, text: 'Ropana' }
       ],
       correctAnswerId: 2
     },
     {
       id: 7,
-      carakanText: '&&&&&',
+      carakanText: 'ꦏꦺꦴꦏꦺꦴꦤ',
       answers: [
-        { id: 1, text: 'Naya' },
-        { id: 2, text: 'Nyapa' },
-        { id: 3, text: 'Nyepa' },
-        { id: 4, text: 'Nyata' }
+        { id: 1, text: 'Sokona' },
+        { id: 2, text: 'Kokona' },
+        { id: 3, text: 'Gulana' },
+        { id: 4, text: 'Contona' }
       ],
       correctAnswerId: 2
     },
     {
       id: 8,
-      carakanText: '911',
+      carakanText: 'ꦱꦭꦗ',
       answers: [
-        { id: 1, text: 'Daftar' },
-        { id: 2, text: 'Daltar' },
-        { id: 3, text: 'Daptar' },
-        { id: 4, text: 'Dartar' }
+        { id: 1, text: 'Jakaja' },
+        { id: 2, text: 'Apana' },
+        { id: 3, text: 'Salaja' },
+        { id: 4, text: 'Sangaja' }
       ],
       correctAnswerId: 3
     },
@@ -180,6 +190,11 @@ const QuizScreen: React.FC = () => {
     setScore(0);
   };
 
+  // Fungsi untuk kembali ke menu utama
+  const goToMainMenu = () => {
+    router.push('/mainmenu');
+  };
+
   const allQuestionsAnswered = () => {
     return questions.every(question => selectedAnswers[question.id] !== undefined);
   };
@@ -211,6 +226,14 @@ const QuizScreen: React.FC = () => {
             onPress={restartQuiz}
           >
             <Text style={styles.restartButtonText}>Mulai Lagi</Text>
+          </TouchableOpacity>
+          
+          {/* Tambahkan tombol untuk kembali ke menu utama */}
+          <TouchableOpacity 
+            style={styles.mainMenuButton}
+            onPress={goToMainMenu}
+          >
+            <Text style={styles.mainMenuButtonText}>Kembali ke Menu Utama</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -520,9 +543,27 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#1B4D89',
     marginTop: 16,
+    width: '80%',
   },
   restartButtonText: {
     color: '#1B4D89',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  // Tambahkan style untuk tombol menu utama
+  mainMenuButton: {
+    backgroundColor: '#7E80D8',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1B4D89',
+    marginTop: 16,
+    width: '80%',
+  },
+  mainMenuButtonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold'
   }

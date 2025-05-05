@@ -14,6 +14,29 @@ const firebaseConfig = {
   appId: "1:94329147998:web:ff9b95cb0b02a51c321acf"
 };
 
+// // Initialize Firebase
+// let app;
+// let auth: Auth;
+
+// try {
+//   console.log('Initializing Firebase...');
+//   app = initializeApp(firebaseConfig);
+  
+//   console.log('Initializing Firebase Auth...');
+//   auth = getAuth(app);
+  
+//   console.log('Firebase Auth initialized successfully');
+// } catch (error) {
+//   console.error('Error initializing Firebase:', error);
+  
+//   auth = {} as Auth;
+// }
+
+// export { auth };
+// export default app;
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+export const auth = getAuth(app);
+// export const db = getFirestore(app);
+
+export default app;

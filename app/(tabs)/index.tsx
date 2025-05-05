@@ -1,199 +1,438 @@
-  import React, { useState } from 'react';
-  import { 
-    View, 
-    Text, 
-    TextInput, 
-    TouchableOpacity, 
-    StyleSheet, 
-    Image, 
-    SafeAreaView,
-    KeyboardAvoidingView,
-    Platform
-  } from 'react-native';
-  import { useRouter } from 'expo-router'; 
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Image, 
+  SafeAreaView, 
+  Alert, 
+  ActivityIndicator
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  updateProfile 
+} from 'firebase/auth';
+import { auth } from '../../utils/firebase/config';
 
-
-  const LoginScreen = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+const LoginScreen = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(''); 
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   
-    const router = useRouter();
+  const router = useRouter();
 
-    const [showPassword, setShowPassword] = useState(false);
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Silakan isi semua field');
+      return;
+    }
 
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.logoContainer}>
+    setIsLoading(true);
+
+    try {
+      if (username === 'admin' && password === 'admin') {
+        console.log('Admin login mode');
+        await AsyncStorage.setItem('userStreakData', JSON.stringify({
+          streak: 1,
+          lastLogin: new Date().toDateString()
+        }));
+        router.push('/mainmenu');
+        setIsLoading(false);
+        return;
+      }
+
+      const emailToUse = username.includes('@') ? username : `${username}@example.com`;
+      
+      console.log('Attempting to sign in with Firebase:', emailToUse);
+      
+      await signInWithEmailAndPassword(auth, emailToUse, password);
+      console.log('Firebase login successful');
+      
+      await updateStreak();
+      
+      router.push('/mainmenu');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      let errorMessage = 'Username atau password salah';
+      
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage = 'User tidak ditemukan';
+            break;
+          case 'auth/wrong-password':
+            errorMessage = 'Password salah';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Format email tidak valid';
+            break;
+          case 'auth/invalid-credential':
+            errorMessage = 'Kredensial tidak valid';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Koneksi jaringan bermasalah';
+            break;
+          default:
+            errorMessage = `Error: ${error.code}`;
+        }
+      }
+      
+      Alert.alert('Login Gagal', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Silakan isi semua field');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password harus minimal 6 karakter');
+      return;
+    }
+
+    const emailToUse = isSignUp && email ? email : `${username}@example.com`;
+    if (!emailToUse.includes('@')) {
+      Alert.alert('Error', 'Format email tidak valid');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log('Attempting to create account with Firebase:', emailToUse);
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, emailToUse, password);
+      console.log('Account created successfully with UID:', userCredential.user.uid);
+      
+      await updateProfile(userCredential.user, {
+        displayName: username
+      });
+      console.log('Profile updated with displayName:', username);
+      
+      await initializeStreak();
+      
+      router.push('/mainmenu');
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      
+      let errorMessage = 'Terjadi kesalahan saat mendaftar';
+      
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'Email sudah digunakan';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Format email tidak valid';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'Password terlalu lemah';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Koneksi jaringan bermasalah';
+            break;
+          default:
+            errorMessage = `Error: ${error.code}`;
+        }
+      }
+      
+      Alert.alert('Pendaftaran Gagal', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initializeStreak = async () => {
+    try {
+      const today = new Date().toDateString();
+      const initialStreakData = {
+        streak: 1,
+        lastLogin: today
+      };
+      await AsyncStorage.setItem('userStreakData', JSON.stringify(initialStreakData));
+    } catch (error) {
+      console.error('Error initializing streak:', error);
+    }
+  };
+
+  const updateStreak = async () => {
+    try {
+      const streakDataJSON = await AsyncStorage.getItem('userStreakData');
+      const today = new Date().toDateString();
+      
+      if (streakDataJSON) {
+        const streakData = JSON.parse(streakDataJSON);
+        const lastLoginDate = new Date(streakData.lastLogin).toDateString();
+        
+        if (lastLoginDate !== today) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayString = yesterday.toDateString();
+          
+          if (lastLoginDate === yesterdayString) {
+            const newStreak = streakData.streak + 1;
+            const newStreakData = {
+              streak: newStreak,
+              lastLogin: today
+            };
+            await AsyncStorage.setItem('userStreakData', JSON.stringify(newStreakData));
+          } 
+          else {
+            const newStreakData = {
+              streak: 1,
+              lastLogin: today
+            };
+            await AsyncStorage.setItem('userStreakData', JSON.stringify(newStreakData));
+          }
+        }
+      } else {
+        await initializeStreak();
+      }
+    } catch (error) {
+      console.error('Error updating streak:', error);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.logoContainer}>
         <Image 
-            source={require('../../assets/images/tampilan/logoapl.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
+          source={require('../../assets/images/tampilan/logoapl.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.headerText}>
+          {isSignUp ? 'Daftar Akun Baru' : 'Login'}
+        </Text>
+        
+        <View style={styles.inputContainer}>
+          <View style={styles.iconContainer}>
+            <Image 
+              source={require('../../assets/images/tampilan/icon/user.png')} 
+              style={styles.icon}
+            />
+          </View>
+          <TextInput
+            style={styles.input}
+            placeholder={isSignUp ? "nyama" : "nyama atau email"}
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
           />
         </View>
 
-        <View style={styles.card}>
+        {isSignUp && (
           <View style={styles.inputContainer}>
             <View style={styles.iconContainer}>
               <Image 
                 source={require('../../assets/images/tampilan/icon/user.png')} 
                 style={styles.icon}
-                
               />
             </View>
             <TextInput
               style={styles.input}
-              placeholder="nyama"
-              value={username}
-              onChangeText={setUsername}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
           </View>
+        )}
 
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <View style={styles.iconContainer}>
-              <Image 
-                source={require('../../assets/images/tampilan/icon/locked-computer.png')} 
-                style={styles.icon}
-              />
-            </View>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="password"
-              secureTextEntry={!showPassword} 
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconContainer}>
-              <Image 
-                source={
-                  showPassword 
-                    ? require('../../assets/images/tampilan/icon/view.png') 
-                    : require('../../assets/images/tampilan/icon/hide.png') 
-                }
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/mainmenu')}>
-            <Text style={styles.loginButtonText}>mayu ajer</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.separator}>otaba</Text>
-
-          <TouchableOpacity style={styles.googleButton}>
+        <View style={styles.inputContainer}>
+          <View style={styles.iconContainer}>
             <Image 
-              // source={require('./assets/images/google-logo.png')} 
-              style={styles.googleLogo}
+              source={require('../../assets/images/tampilan/icon/locked-computer.png')} 
+              style={styles.icon}
+            />
+          </View>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="password"
+            secureTextEntry={!showPassword} 
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconContainer}>
+            <Image 
+              source={
+                showPassword 
+                  ? require('../../assets/images/tampilan/icon/view.png') 
+                  : require('../../assets/images/tampilan/icon/hide.png') 
+              }
+              style={styles.icon}
             />
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    );
-  };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#7B7EDE', 
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    logoContainer: {
-      marginBottom: 40,
-    },
-    logoImage: {
-      width: 150,
-      height: 150,
-    },
-  
-    logoSquare: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      width: 15,
-      height: 15,
-      backgroundColor: '#F7DA30',
-      borderWidth: 1,
-      borderColor: 'black',
-    },
-    card: {
-      backgroundColor: 'white',
-      borderRadius: 30,
-      padding: 30,
-      width: '85%',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: '#ddd',
-      borderRadius: 25,
-      marginVertical: 10,
-      width: '100%',
-      height: 50,
-    },
-    iconContainer: {
-      padding: 10,
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: 50,
-    },
-    icon: {
-      width: 20,
-      height: 20,
-      opacity: 0.5,
-    },
-    input: {
-      flex: 1,
-      height: '100%',
-      padding: 10,
-    },
-    loginButton: {
-      backgroundColor: '#F7DA30', 
-      width: '100%',
-      height: 50,
-      borderRadius: 25,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 20,
-    },
-    loginButtonText: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: 'black',
-    },
-    separator: {
-      marginVertical: 15,
-      color: '#777',
-    },
-    googleButton: {
-      width: 140,
-      height: 40,
-      borderWidth: 1,
-      borderColor: '#ddd',
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'row',
-    },
-    googleLogo: {
-      width: 100,
-      height: 20,
-      resizeMode: 'contain',
-    },
-  });
+        {!isSignUp && (
+          <Text style={styles.loginTip}>
+            Gunakan email lengkap untuk login jika sudah terdaftar
+          </Text>
+        )}
 
-  export default LoginScreen;
+        <TouchableOpacity 
+          style={styles.loginButton} 
+          onPress={isSignUp ? handleSignUp : handleLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#000000" size="small" />
+          ) : (
+            <Text style={styles.loginButtonText}>
+              {isSignUp ? 'Daftar' : 'mayu ajer'}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={() => setIsSignUp(!isSignUp)}
+          style={styles.switchModeContainer}
+        >
+          <Text style={styles.switchModeText}>
+            {isSignUp ? 'Sudah punya akun? Login' : 'Belum punya akun? Daftar'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.separator}>otaba</Text>
+
+        <TouchableOpacity style={styles.googleButton}>
+          <Image 
+            style={styles.googleLogo}
+          />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#7B7EDE', 
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    marginBottom: 40,
+  },
+  logoImage: {
+    width: 150,
+    height: 150,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 30,
+    padding: 30,
+    width: '85%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 25,
+    marginVertical: 10,
+    width: '100%',
+    height: 50,
+  },
+  iconContainer: {
+    padding: 10,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 50,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    opacity: 0.5,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    padding: 10,
+  },
+  loginButton: {
+    backgroundColor: '#F7DA30', 
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  switchModeContainer: {
+    marginTop: 15,
+  },
+  switchModeText: {
+    color: '#7B7EDE',
+    fontSize: 14,
+  },
+  separator: {
+    marginVertical: 15,
+    color: '#777',
+  },
+  googleButton: {
+    width: 140,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  googleLogo: {
+    width: 100,
+    height: 20,
+    resizeMode: 'contain',
+  },
+  loginTip: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+    textAlign: 'center',
+  }
+});
+
+export default LoginScreen;

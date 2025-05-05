@@ -1,5 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Modal } from 'react-native';
+import React, { 
+  useState,
+  useEffect,
+  useRef 
+} from 'react';
+import {
+  View, 
+  Text,
+  TouchableOpacity,
+  StyleSheet, 
+  SafeAreaView, 
+  Image, 
+  Modal 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 
 
@@ -101,13 +113,17 @@ const CustomModal: React.FC<CustomModalProps> = ({
 
 const MatchingGameScreen: React.FC = () => {
   const router = useRouter();
+  const isMounted = useRef(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const gameLevels: GameLevel[] = [
     {
       level: 1,
       title: "Level 1 - Pemula",
       timeLimit: 60,
       wordPairs: [
-        { id: 1, leftWord: 'ᮃᮕᮔ', rightWord: 'Apana' },
+        { id: 1, leftWord: 'ꦲꦥꦤ', rightWord: 'Apana' },
         { id: 2, leftWord: 'ᮏᮔ᭄ᮒᮁ', rightWord: 'Jantar' },
         { id: 3, leftWord: 'ᮞᮍᮥ', rightWord: 'Sangu' },
       ]
@@ -186,26 +202,49 @@ const MatchingGameScreen: React.FC = () => {
   const currentLevel = gameLevels[currentLevelIndex];
 
   useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      
+      setIsGameActive(false);
+      
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     initializeLevel(0);
   }, []);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    let isMounted = true;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     
     if (isGameActive && timeRemaining > 0) {
-      timer = setInterval(() => {
-        if (isMounted) {
+      timerRef.current = setInterval(() => {
+        if (isMounted.current) {
           setTimeRemaining(prevTime => {
             if (prevTime <= 1) {
-              if (timer) {
-                clearInterval(timer);
+              if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
               }
-              setTimeout(() => {
-                if (isMounted) {
+              
+              timeoutRef.current = setTimeout(() => {
+                if (isMounted.current) {
                   handleGameOver();
                 }
               }, 0);
+              
               return 0;
             }
             return prevTime - 1;
@@ -215,9 +254,9 @@ const MatchingGameScreen: React.FC = () => {
     }
     
     return () => {
-      isMounted = false;
-      if (timer) {
-        clearInterval(timer);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, [isGameActive]);
@@ -237,36 +276,44 @@ const MatchingGameScreen: React.FC = () => {
     secondaryButtonAction?: () => void,
     imageSource?: any
   ) => {
+    if (!isMounted.current) return;
+    
     const primaryAction = primaryButtonAction;
     const secondaryAction = secondaryButtonAction;
     
     setTimeout(() => {
-      setModalTitle(title);
-      setModalMessage(message);
-      setModalPrimaryButtonText(primaryButtonText);
-      setModalPrimaryButtonAction(() => primaryAction);
-      
-      if (secondaryButtonText && secondaryAction) {
-        setModalSecondaryButtonText(secondaryButtonText);
-        setModalSecondaryButtonAction(() => secondaryAction);
-      } else {
-        setModalSecondaryButtonText(undefined);
-        setModalSecondaryButtonAction(undefined);
+      if (isMounted.current) {
+        setModalTitle(title);
+        setModalMessage(message);
+        setModalPrimaryButtonText(primaryButtonText);
+        setModalPrimaryButtonAction(() => primaryAction);
+        
+        if (secondaryButtonText && secondaryAction) {
+          setModalSecondaryButtonText(secondaryButtonText);
+          setModalSecondaryButtonAction(() => secondaryAction);
+        } else {
+          setModalSecondaryButtonText(undefined);
+          setModalSecondaryButtonAction(undefined);
+        }
+        
+        if (imageSource) {
+          setModalImage(imageSource);
+        } else {
+          setModalImage(require('../../assets/images/tampilan/AstronoutGameA.png'));
+        }
+        
+        setIsModalVisible(true);
       }
-      
-      if (imageSource) {
-        setModalImage(imageSource);
-      } else {
-        setModalImage(require('../../assets/images/tampilan/AstronoutGameA.png'));
-      }
-      
-      setIsModalVisible(true);
     }, 0);
   };
 
   const hideModal = () => {
+    if (!isMounted.current) return;
+    
     setTimeout(() => {
-      setIsModalVisible(false);
+      if (isMounted.current) {
+        setIsModalVisible(false);
+      }
     }, 0);
   };
 
@@ -280,6 +327,18 @@ const MatchingGameScreen: React.FC = () => {
   };
 
   const initializeLevel = (levelIndex: number) => {
+    if (!isMounted.current) return;
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     const level = gameLevels[levelIndex];
     
     const left = level.wordPairs.map((pair) => ({
@@ -308,6 +367,8 @@ const MatchingGameScreen: React.FC = () => {
   };
 
   const startGame = () => {
+    if (!isMounted.current) return;
+    
     setCurrentLevelIndex(0);
     setAllLevelsCompleted(false);
     initializeLevel(0);
@@ -316,7 +377,16 @@ const MatchingGameScreen: React.FC = () => {
   const handleLevelComplete = () => {
     setIsGameActive(false);
     
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    if (!isMounted.current) return;
+    
     setTimeout(() => {
+      if (!isMounted.current) return;
+      
       setIsGameCompleted(true);
       
       if (currentLevelIndex < gameLevels.length - 1) {
@@ -325,6 +395,7 @@ const MatchingGameScreen: React.FC = () => {
         const handleNextLevel = () => {
           hideModal();
           setTimeout(() => {
+            if (!isMounted.current) return;
             setCurrentLevelIndex(nextLevelIndex);
             initializeLevel(nextLevelIndex);
           }, 100);
@@ -345,6 +416,7 @@ const MatchingGameScreen: React.FC = () => {
         const handleRestart = () => {
           hideModal();
           setTimeout(() => {
+            if (!isMounted.current) return;
             startGame();
           }, 100);
         };
@@ -365,10 +437,15 @@ const MatchingGameScreen: React.FC = () => {
   const handleGameOver = () => {
     setIsGameActive(false);
     
+    if (!isMounted.current) return;
+    
     setTimeout(() => {
+      if (!isMounted.current) return;
+      
       const handleRetry = () => {
         hideModal();
         setTimeout(() => {
+          if (!isMounted.current) return;
           initializeLevel(currentLevelIndex);
         }, 100);
       };
@@ -376,6 +453,7 @@ const MatchingGameScreen: React.FC = () => {
       const handleRestartGame = () => {
         hideModal();
         setTimeout(() => {
+          if (!isMounted.current) return;
           startGame();
         }, 100);
       };
@@ -392,8 +470,25 @@ const MatchingGameScreen: React.FC = () => {
     }, 50);
   };
 
+  const goToMainMenu = () => {
+    setIsGameActive(false);
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    // Arahkan ke menu utama
+    router.push('/mainmenu');
+  };
+
   const handleItemSelect = (item: WordItem) => {
-    if (!isGameActive) return;
+    if (!isGameActive || !isMounted.current) return;
     
     if (matchedPairs.includes(item.pairId)) {
       return;
@@ -414,8 +509,13 @@ const MatchingGameScreen: React.FC = () => {
       setSelectedItem(null);
     } else {
       setSelectedItem(item);
-      setTimeout(() => {
-        setSelectedItem(null);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        if (isMounted.current) {
+          setSelectedItem(null);
+        }
       }, 1000);
     }
   };
@@ -445,6 +545,13 @@ const MatchingGameScreen: React.FC = () => {
           onPress={startGame}
         >
           <Text style={styles.startButtonText}>Main Lagi</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.startButton, styles.menuButton]}
+          onPress={goToMainMenu}
+        >
+          <Text style={styles.menuButtonText}>Kembali ke Menu Utama</Text>
         </TouchableOpacity>
       </View>
     );
@@ -552,7 +659,7 @@ const MatchingGameScreen: React.FC = () => {
               <Text style={styles.buttonText}>Mulai Ulang</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/mainmenu')}>
+            <TouchableOpacity style={styles.homeButton} onPress={goToMainMenu}>
               <Text style={styles.buttonText}>Utama</Text>
             </TouchableOpacity>
           </View>
@@ -768,11 +875,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     borderColor: '#1B4D89',
+    marginBottom: 10, // Tambahkan margin bottom
+    width: '80%', // Tetapkan lebar yang konsisten
+    alignItems: 'center',
   },
   startButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1B4D89',
+  },
+  // Tambahkan style untuk tombol menu
+  menuButton: {
+    backgroundColor: '#1E3A8A',
+    borderColor: '#4D5BD1',
+  },
+  menuButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
   },
   modalOverlay: {
     flex: 1,
