@@ -7,13 +7,13 @@ import {
   StyleSheet, 
   Image, 
   SafeAreaView, 
-  Alert 
+  Alert,
+  Modal
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
-// import { useAppTimeTracker } from '../../hooks/useAppTimeTracker';
 
 type StreakData = {
   streak: number;
@@ -26,16 +26,14 @@ type StreakData = {
 const MainMenu = () => {
   const router = useRouter();
   const [streakCount, setStreakCount] = useState(0);
-  const [lastLoginDate, setLastLoginDate] = useState(null);
+  const [lastLoginDate, setLastLoginDate] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
   const [isStreakActive, setIsStreakActive] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);  
   
-  // Use the app time tracker hook
-  // const { startSession, endSession } = useAppTimeTracker();
 
   useEffect(() => {
-    // Start tracking time when MainMenu loads
-    // startSession();
+
 
     const loadUserData = async () => {
       try {
@@ -60,10 +58,6 @@ const MainMenu = () => {
 
     loadUserData();
 
-    // Cleanup when component unmounts
-    // return () => {
-    //   // endSession();
-    // };
   }, []);
 
   const checkAndUpdateStreak = async (): Promise<void> => {
@@ -81,31 +75,25 @@ const MainMenu = () => {
         const lastLoginDate = new Date(lastLogin).toDateString();
         
         if (lastLoginDate !== today) {
-          // New day login
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
           const yesterdayString = yesterday.toDateString();
           
           if (lastLoginDate === yesterdayString) {
-            // Consecutive day login
             const newStreak = streak + 1;
             setStreakCount(newStreak);
-            // Set streak as inactive by default for new day
             setIsStreakActive(false);
             await saveStreakData(newStreak, today, false);
           } else {
-            // Streak broken
             setStreakCount(1);
             setIsStreakActive(false);
             await saveStreakData(1, today, false);
           }
         } else {
-          // Same day login - check if streak is active
           if (lastMaterialAccess && materialTimeSpent) {
             const timeSinceLastAccess = new Date().getTime() - new Date(lastMaterialAccess).getTime();
             const timeSpentToday = materialTimeSpent;
             
-            // If spent at least 60 seconds on material today
             if (timeSpentToday >= 60) {
               setIsStreakActive(true);
               await saveStreakData(streak, today, true, lastMaterialAccess, materialTimeSpent);
@@ -117,7 +105,6 @@ const MainMenu = () => {
           }
         }
       } else {
-        // First time user
         setStreakCount(1);
         setIsStreakActive(false);
         await saveStreakData(1, today, false);
@@ -148,16 +135,17 @@ const MainMenu = () => {
     }
   };
 
-  // Modified function to handle navigation to materi with time tracking
   const handleMateriNavigation = () => {
-    // Save the current time when entering materi
     AsyncStorage.setItem('materiStartTime', new Date().toISOString());
     router.push('/materi');
   };
 
+  const toggleModal = () => {
+    setIsModalVisible(!isModalVisible);
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
-      {/* Updated header with integrated elements */}
       <View style={styles.headerRow}>
         <TouchableOpacity 
           style={styles.integratedHeader}
@@ -184,15 +172,13 @@ const MainMenu = () => {
           </View>
         </TouchableOpacity>
 
-        {/* Lampu berada tepat di kanan box */}
-        <TouchableOpacity style={styles.bulbIconContainer}>
+        <TouchableOpacity style={styles.bulbIconContainer} onPress={toggleModal}>
           <Image
             source={require('../../assets/images/tampilan/icon/bulb.png')}
             style={styles.bulbIcon}
           />
         </TouchableOpacity>
       </View>
-
 
       <View style={styles.titleContainer}>
         <Image 
@@ -244,6 +230,22 @@ const MainMenu = () => {
           </TouchableOpacity>
         </View>
       </View>
+      <Modal
+        visible={isModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={toggleModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Tips Menjaga Streak</Text>
+            <Text style={styles.modalText}>Streak akan menyala jika kamu membuka dan menghabiskan waktu selama 1 menit di materi</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+              <Text style={styles.closeButtonText}>Ayo belajar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -271,7 +273,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderWidth: 1,
     borderColor: '#FFA500',
-    flex: 1, // ini penting agar ambil sisa lebar
+    flex: 1, 
+    marginTop: 20,
   },
   bulbIconContainer: {
     marginLeft: 10,
@@ -280,6 +283,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderWidth: 1,
     borderColor: '#FFD580',
+    marginTop: 20,
   },
   bulbIcon: {
     width: 24,
@@ -320,21 +324,13 @@ const styles = StyleSheet.create({
     height: 20, 
     resizeMode: 'contain', 
   },
-  // bulbIconContainer: {
-  //   marginLeft: 10,
-  //   padding: 4,
-  // },
-  // bulbIcon: {
-  //   width: 24,
-  //   height: 24,
-  //   resizeMode: 'contain',
-  // },
   profileIconContainer: {
     padding: 5,
   },
   titleContainer: {
     alignItems: 'center',
     marginBottom: 30,
+    marginTop: 20,
   },
   titleImage: {
     width: 400,
@@ -389,6 +385,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+    width: '80%',
+    alignItems: 'center',
+    borderColor: '#C5172E',
+    borderWidth: 2,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: '#FFD580',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  
 });
 
 export default MainMenu;

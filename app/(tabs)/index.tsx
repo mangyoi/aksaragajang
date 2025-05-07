@@ -7,8 +7,8 @@ import {
   StyleSheet, 
   Image, 
   SafeAreaView, 
-  Alert, 
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +18,7 @@ import {
   updateProfile 
 } from 'firebase/auth';
 import { auth } from '../../utils/firebase/config';
+import { AntDesign } from '@expo/vector-icons';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
@@ -27,11 +28,22 @@ const LoginScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   
+  // Modal states
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorModalTitle, setErrorModalTitle] = useState('');
+  const [errorModalMessage, setErrorModalMessage] = useState('');
+  
   const router = useRouter();
+
+  const showErrorModal = (title: string, message: string) => {
+    setErrorModalTitle(title);
+    setErrorModalMessage(message);
+    setErrorModalVisible(true);
+  };
 
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert('Error', 'Silakan isi semua field');
+      showErrorModal('Error', 'Silakan isi semua field');
       return;
     }
 
@@ -76,7 +88,7 @@ const LoginScreen = () => {
             errorMessage = 'Format email tidak valid';
             break;
           case 'auth/invalid-credential':
-            errorMessage = 'Kredensial tidak valid';
+            errorMessage = 'Username atau password salah';
             break;
           case 'auth/network-request-failed':
             errorMessage = 'Koneksi jaringan bermasalah';
@@ -86,7 +98,7 @@ const LoginScreen = () => {
         }
       }
       
-      Alert.alert('Login Gagal', errorMessage);
+      showErrorModal('Login Gagal', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -94,18 +106,18 @@ const LoginScreen = () => {
 
   const handleSignUp = async () => {
     if (!username || !password) {
-      Alert.alert('Error', 'Silakan isi semua field');
+      showErrorModal('Error', 'Silakan isi semua field');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password harus minimal 6 karakter');
+      showErrorModal('Error', 'Password harus minimal 6 karakter');
       return;
     }
 
     const emailToUse = isSignUp && email ? email : `${username}@example.com`;
     if (!emailToUse.includes('@')) {
-      Alert.alert('Error', 'Format email tidak valid');
+      showErrorModal('Error', 'Format email tidak valid');
       return;
     }
 
@@ -149,7 +161,7 @@ const LoginScreen = () => {
         }
       }
       
-      Alert.alert('Pendaftaran Gagal', errorMessage);
+      showErrorModal('Pendaftaran Gagal', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -321,6 +333,44 @@ const LoginScreen = () => {
           />
         </TouchableOpacity>
       </View>
+
+      {/* Error Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setErrorModalVisible(false)}
+        >
+          <View 
+            style={styles.modalContent} 
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{errorModalTitle}</Text>
+              <TouchableOpacity onPress={() => setErrorModalVisible(false)}>
+                <AntDesign name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <AntDesign name="exclamationcircle" size={50} color="#FF3B30" style={styles.modalIcon} />
+              <Text style={styles.modalMessage}>{errorModalMessage}</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -432,6 +482,62 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 4,
     textAlign: 'center',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 25,
+    width: '85%',
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalBody: {
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  modalIcon: {
+    marginBottom: 15,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    lineHeight: 24,
+  },
+  modalButton: {
+    backgroundColor: '#7B7EDE',
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 20,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  modalButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   }
 });
 

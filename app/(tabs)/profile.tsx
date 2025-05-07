@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView,
-  Dimensions, Alert, Modal, Image 
+  Dimensions, Alert, Modal, Image, TextInput, ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../../utils/firebase/config';
-import { signOut } from 'firebase/auth';
-import { MaterialIcons, Feather } from '@expo/vector-icons';
+import { signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { MaterialIcons, Feather, AntDesign } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -19,13 +19,28 @@ type StreakData = {
   materialTimeSpent?: number;
 };
 
+// Type for displayed streak day
+type StreakDay = {
+  dayNumber: number;
+  isActive: boolean;
+};
+
 const ProfileScreen = () => {
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [streakCount, setStreakCount] = useState(0);
-  const [weeklyStreak, setWeeklyStreak] = useState<boolean[]>([false, false, false, false, false, false, false]);
+  const [displayedStreak, setDisplayedStreak] = useState<StreakDay[]>([]);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0);
+  
+  // Password change states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -65,22 +80,31 @@ const ProfileScreen = () => {
       if (storedStreakData) {
         const streakData = JSON.parse(storedStreakData) as StreakData;
         setStreakCount(streakData.streak);
-        generateWeeklyStreak(streakData);
+        generateDisplayedStreak(streakData);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
     }
   };
 
-  const generateWeeklyStreak = (streakData: StreakData) => {
-    const weekStreak = [false, false, false, false, false, false, false];
-    for (let i = 0; i < Math.min(streakData.streak - 1, 7); i++) {
-      weekStreak[i] = true;
+  const generateDisplayedStreak = (streakData: StreakData) => {
+    const currentStreak = streakData.streak;
+    const displayDays: StreakDay[] = [];
+    
+    // Determine the starting day number based on the current streak
+    let startDay = 1;
+    if (currentStreak > 7) {
+      startDay = currentStreak - 6; // Show the last 7 days of the streak
     }
-    if (streakData.isStreakActive && streakData.streak > 0 && streakData.streak <= 7) {
-      weekStreak[streakData.streak - 1] = true;
+    
+    // Generate the 7 days to display
+    for (let i = 0; i < 7; i++) {
+      const dayNumber = startDay + i;
+      const isActive = dayNumber < currentStreak || (dayNumber === currentStreak && streakData.isStreakActive);
+      displayDays.push({ dayNumber, isActive });
     }
-    setWeeklyStreak(weekStreak);
+    
+    setDisplayedStreak(displayDays);
   };
 
   const formatTimeSpent = (seconds: number): string => {
@@ -98,7 +122,7 @@ const ProfileScreen = () => {
   };
 
   const handleChangePassword = () => {
-    Alert.alert('Info', 'Fitur ubah password akan segera hadir');
+    setChangePasswordModalVisible(true);
   };
 
   const handleOtherSettings = () => {
@@ -114,6 +138,98 @@ const ProfileScreen = () => {
       console.error('Error signing out:', error);
       Alert.alert('Error', 'Gagal logout');
     }
+  };
+  
+  const validatePasswordChange = () => {
+    // Reset error messages
+    setPasswordError('');
+    
+    // Validate current password
+    if (!currentPassword) {
+      setPasswordError('Password saat ini harus diisi');
+      return false;
+    }
+    
+    // Validate new password
+    if (!newPassword) {
+      setPasswordError('Password baru harus diisi');
+      return false;
+    }
+    
+    // Check password length
+    if (newPassword.length < 6) {
+      setPasswordError('Password baru minimal 6 karakter');
+      return false;
+    }
+    
+    // Confirm password
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Password baru tidak cocok dengan konfirmasi');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  const handlePasswordChange = async () => {
+    // Validate inputs
+    if (!validatePasswordChange()) {
+      return;
+    }
+    
+    setIsChangingPassword(true);
+    setPasswordError('');
+    
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        throw new Error('User tidak ditemukan');
+      }
+      
+      // Re-authenticate the user
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Update the password
+      await updatePassword(user, newPassword);
+      
+      // Success
+      setPasswordSuccess(true);
+      
+      // Reset fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setPasswordSuccess(false);
+        setChangePasswordModalVisible(false);
+      }, 2000);
+      
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      
+      // Handle specific error cases
+      if (error.code === 'auth/wrong-password') {
+        setPasswordError('Password saat ini salah');
+      } else if (error.code === 'auth/too-many-requests') {
+        setPasswordError('Terlalu banyak percobaan. Coba lagi nanti');
+      } else {
+        setPasswordError('Gagal mengubah password. Silakan coba lagi.');
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+  
+  const closePasswordModal = () => {
+    setChangePasswordModalVisible(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError('');
+    setPasswordSuccess(false);
   };
 
   return (
@@ -135,14 +251,17 @@ const ProfileScreen = () => {
         </View>
 
         <View style={[styles.card, styles.streakCard]}>
-          <Text style={styles.streakTitle}>Streak</Text>
+          <View style={styles.streakHeader}>
+            <Text style={styles.streakTitle}>Streak</Text>
+            <Text style={styles.streakCountText}>Total: {streakCount} hari</Text>
+          </View>
           <View style={styles.streakDays}>
-            {weeklyStreak.map((isActive, index) => (
+            {displayedStreak.map((day, index) => (
               <View key={index} style={styles.dayContainer}>
-                <Text style={styles.dayNumber}>{index + 1}</Text>
+                <Text style={styles.dayNumber}>{day.dayNumber}</Text>
                 <Image 
                   style={styles.streakIcon} 
-                  source={isActive 
+                  source={day.isActive 
                     ? require('../../assets/images/tampilan/icon/fire-on.png')
                     : require('../../assets/images/tampilan/icon/fire-off.png')
                   } 
@@ -180,6 +299,7 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Logout Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -198,6 +318,93 @@ const ProfileScreen = () => {
               perlu melakukan login{'\n'}
               kembali
             </Text>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      
+      {/* Change Password Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={changePasswordModalVisible}
+        onRequestClose={closePasswordModal}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={closePasswordModal}
+        >
+          <View 
+            style={styles.passwordModalContent} 
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.passwordModalHeader}>
+              <Text style={styles.passwordModalTitle}>Ubah Password</Text>
+              <TouchableOpacity onPress={closePasswordModal}>
+                <AntDesign name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            {passwordSuccess ? (
+              <View style={styles.successContainer}>
+                <AntDesign name="checkcircle" size={60} color="#4CAF50" />
+                <Text style={styles.successText}>Password berhasil diubah!</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Password Saat Ini</Text>
+                  <TextInput
+                    style={styles.input}
+                    secureTextEntry
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    placeholder="Masukkan password saat ini"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Password Baru</Text>
+                  <TextInput
+                    style={styles.input}
+                    secureTextEntry
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    placeholder="Masukkan password baru"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Konfirmasi Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    secureTextEntry
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Konfirmasi password baru"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+                
+                {passwordError ? (
+                  <Text style={styles.errorText}>{passwordError}</Text>
+                ) : null}
+                
+                <TouchableOpacity 
+                  style={styles.changePasswordSubmitButton}
+                  onPress={handlePasswordChange}
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? (
+                    <ActivityIndicator color="#FFF" />
+                  ) : (
+                    <Text style={styles.changePasswordSubmitText}>Ubah Password</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -271,11 +478,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     borderColor: '#000',
   },
+  streakHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
   streakTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000',
-    marginBottom: 15,
+  },
+  streakCountText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF8C00',
   },
   streakDays: {
     flexDirection: 'row',
@@ -381,6 +598,77 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333',
     lineHeight: 24,
+  },
+  // Password Modal Styles
+  passwordModalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 25,
+    width: width * 0.85,
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  passwordModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 10,
+  },
+  passwordModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  inputContainer: {
+    marginBottom: 15,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
+  },
+  input: {
+    backgroundColor: '#F0F0F0',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#FF3B30',
+    marginBottom: 15,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  changePasswordSubmitButton: {
+    backgroundColor: '#7E80D8',
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  changePasswordSubmitText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  successContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  successText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginTop: 15,
   },
 });
 

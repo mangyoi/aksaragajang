@@ -29,7 +29,6 @@ type StreakData = {
   materialTimeSpent?: number;
 };
 
-// Updated sowaraData with Carakan script images
 const sowaraData: SowaraItem[] = [
   { 
     id: '1', 
@@ -49,7 +48,6 @@ const sowaraData: SowaraItem[] = [
   },
 ];
 
-// Conto data with image sources
 const conto: ContoItem[] = [
   { 
     id: '1', 
@@ -71,13 +69,11 @@ const conto: ContoItem[] = [
 const mainImages = [
   require('../../assets/images/tampilan/carakan.png'),
   require('../../assets/images/tampilan/pangangguy.png'),
-  // require('../../assets/images/tampilan/carakan3.png'),
 ];
 
-// Updated pronounceData with Carakan script images
 const pronounceData: PronounceItem[] = Array(20).fill(null).map((_, index) => ({
   id: index.toString(),
-  imageSource: require('../../assets/images/tampilan/aksara/a.png') // Using the same image for all items
+  imageSource: require('../../assets/images/tampilan/aksara/a.png') 
 }));
 
 const CarakanApp = () => {
@@ -87,15 +83,12 @@ const CarakanApp = () => {
   const [timeSpentAlert, setTimeSpentAlert] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Initialize time tracking when component mounts
   useEffect(() => {
     startTimeRef.current = new Date();
     console.log('Started tracking time at:', startTimeRef.current);
 
-    // Handle hardware back button
     const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
 
-    // Cleanup when component unmounts
     return () => {
       backHandler.remove();
       updateTimeSpent();
@@ -117,25 +110,20 @@ const CarakanApp = () => {
       
       console.log('Time spent on materi:', timeSpent, 'seconds');
 
-      // Get current streak data
       const storedStreakData = await AsyncStorage.getItem('userStreakData');
       if (storedStreakData) {
         const streakData = JSON.parse(storedStreakData) as StreakData;
         const today = new Date().toDateString();
         
-        // Only update if it's the same day
         if (streakData.lastLogin === today) {
-          // Add to existing time spent or start fresh
           const totalTimeSpent = (streakData.materialTimeSpent || 0) + timeSpent;
           
           console.log('Total time spent today:', totalTimeSpent, 'seconds');
 
-          // Check if we just reached 60 seconds
           if (streakData.materialTimeSpent < 60 && totalTimeSpent >= 60) {
             setTimeSpentAlert(true);
           }
           
-          // Update streak data
           const updatedStreakData: StreakData = {
             ...streakData,
             lastMaterialAccess: endTime.toISOString(),
@@ -152,13 +140,11 @@ const CarakanApp = () => {
     }
   };
 
-  // Handle navigation away from page
   const handleBackNavigation = () => {
     updateTimeSpent();
     router.push('/mainmenu');
   };
 
-  // Auto-save progress periodically
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!startTimeRef.current) return;
@@ -170,12 +156,11 @@ const CarakanApp = () => {
       if (storedStreakData) {
         const streakData = JSON.parse(storedStreakData) as StreakData;
         if (!streakData.isStreakActive && timeSpent >= 60) {
-          // Update immediately when reaching 60 seconds
           await updateTimeSpent();
           clearInterval(interval);
         }
       }
-    }, 5000); // Check every 5 seconds
+    }, 5000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -236,7 +221,6 @@ const CarakanApp = () => {
         </View>
 
         <View style={styles.contentContainer}>
-          {/* Back button at the top */}
           <TouchableOpacity 
             onPress={handleBackNavigation} 
             style={styles.backButton}
@@ -247,33 +231,32 @@ const CarakanApp = () => {
             />
           </TouchableOpacity>
           
-          {/* Main image now below the back button */}
           <View style={styles.imgBox}>
             <FlatList
-              data={mainImages} // Data gambar
+              data={mainImages} 
               renderItem={({ item }) => (
                 <Image source={item} style={styles.slideImage} />
               )}
               keyExtractor={(item, index) => index.toString()}
-              horizontal={true} // Membuat slide horizontal
-              showsHorizontalScrollIndicator={false} // Menyembunyikan indikator scroll
-              pagingEnabled={true} // Mengaktifkan paging untuk slide
+              horizontal={true} 
+              showsHorizontalScrollIndicator={false} 
+              pagingEnabled={true} 
               onScroll={(event) => {
                 const slideIndex = Math.round(
                   event.nativeEvent.contentOffset.x / width
                 );
-                setCurrentIndex(slideIndex); // Perbarui indeks gambar aktif
+                setCurrentIndex(slideIndex); 
               }}
-              scrollEventThrottle={16} // Mengatur frekuensi pembaruan scroll
+              scrollEventThrottle={16} 
             />
-            {/* Tambahkan indikator slider */}
+
             <View style={styles.sliderIndicator}>
               {mainImages.map((_, index) => (
                 <View
                   key={index}
                   style={[
                     styles.dot,
-                    currentIndex === index && styles.activeDot, // Dot aktif
+                    currentIndex === index && styles.activeDot, 
                   ]}
                 />
               ))}
@@ -328,7 +311,6 @@ const CarakanApp = () => {
         </View>
       </Modal>
 
-      {/* Alert Modal for Streak Activation */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -479,11 +461,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#C4C4C4', // Warna dot tidak aktif
+    backgroundColor: '#C4C4C4', 
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: '#1B4D89', // Warna dot aktif
+    backgroundColor: '#1B4D89', 
     width: 10,
     height: 10,
   },
@@ -592,7 +574,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#000',
   },
-  // Alert Modal Styles
   alertModal: {
     backgroundColor: 'white',
     borderRadius: 20,
