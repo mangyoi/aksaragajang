@@ -1,3 +1,4 @@
+//gameA.tsx - Dengan Pengurangan Nyawa Saat Jawaban Salah
 import React, { 
   useState,
   useEffect,
@@ -13,6 +14,9 @@ import {
   Modal 
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import LivesDisplay from '../../components/LivesDisplay';
+import NoLivesModal from '../../components/NoLivesModal';
+import livesManager, { LivesInfo } from '../../utils/livesManager';
 
 
 interface WordPair {
@@ -44,6 +48,7 @@ interface CustomModalProps {
   secondaryButtonText?: string;
   secondaryButtonAction?: () => void;
   imageSource: any;
+  onClose?: () => void; // Tambahkan ini
 }
 
 const CustomModal: React.FC<CustomModalProps> = ({
@@ -54,38 +59,43 @@ const CustomModal: React.FC<CustomModalProps> = ({
   primaryButtonAction,
   secondaryButtonText,
   secondaryButtonAction,
-  imageSource
+  imageSource,
+  onClose, // Tambahkan ini
 }) => {
   const memoizedPrimaryAction = React.useCallback(() => {
-    if (primaryButtonAction) {
-      primaryButtonAction();
-    }
+    if (primaryButtonAction) primaryButtonAction();
   }, [primaryButtonAction]);
-  
+
   const memoizedSecondaryAction = React.useCallback(() => {
-    if (secondaryButtonAction) {
-      secondaryButtonAction();
-    }
+    if (secondaryButtonAction) secondaryButtonAction();
   }, [secondaryButtonAction]);
-  
+
   return (
     <Modal
       transparent={true}
       visible={visible}
       animationType="fade"
-      onRequestClose={() => {}}
+      onRequestClose={onClose}
       hardwareAccelerated={true}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          <Image 
-            source={imageSource} 
-            style={styles.modalImage} 
+          
+          {/* Tombol Close */}
+          {onClose && (
+            <TouchableOpacity style={styles.modalCloseButton} onPress={onClose}>
+              <Text style={styles.modalCloseText}>×</Text>
+            </TouchableOpacity>
+          )}
+
+          <Image
+            source={imageSource}
+            style={styles.modalImage}
             resizeMode="contain"
           />
           <Text style={styles.modalTitle}>{title}</Text>
           <Text style={styles.modalMessage}>{message}</Text>
-          
+
           <View style={styles.modalButtonContainer}>
             <TouchableOpacity
               style={styles.modalPrimaryButton}
@@ -94,7 +104,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
             >
               <Text style={styles.modalPrimaryButtonText}>{primaryButtonText}</Text>
             </TouchableOpacity>
-            
+
             {secondaryButtonText && secondaryButtonAction && (
               <TouchableOpacity
                 style={styles.modalSecondaryButton}
@@ -111,11 +121,25 @@ const CustomModal: React.FC<CustomModalProps> = ({
   );
 };
 
+
 const MatchingGameScreen: React.FC = () => {
   const router = useRouter();
   const isMounted = useRef(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Lives system state
+  const [livesInfo, setLivesInfo] = useState<LivesInfo>({
+    lives: 0,
+    maxLives: 5,
+    timeUntilNextLife: 0,
+    isInitialized: false
+  });
+  const [showNoLivesModal, setShowNoLivesModal] = useState<boolean>(false);
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
+  
+  // Modal untuk menampilkan pesan pengurangan nyawa
+  const [showLivesDeductionModal, setShowLivesDeductionModal] = useState<boolean>(false);
   
   const gameLevels: GameLevel[] = [
     {
@@ -219,8 +243,14 @@ const MatchingGameScreen: React.FC = () => {
     };
   }, []);
 
+  // Check lives status when component mounts
   useEffect(() => {
-    initializeLevel(0);
+    const checkLives = async () => {
+      const info = await livesManager.initialize();
+      setLivesInfo(info);
+    };
+    
+    checkLives();
   }, []);
 
   useEffect(() => {
@@ -326,8 +356,22 @@ const MatchingGameScreen: React.FC = () => {
     return shuffled;
   };
 
-  const initializeLevel = (levelIndex: number) => {
+  // Ubah initializeLevel untuk tidak mengkonsumsi nyawa saat mulai permainan
+  const initializeLevel = async (levelIndex: number) => {
     if (!isMounted.current) return;
+    
+    // Periksa apakah masih ada nyawa tersisa
+    if (levelIndex === 0 && !gameStarted) {
+      const info = await livesManager.getLivesInfo();
+      setLivesInfo(info);
+      
+      if (info.lives <= 0) {
+        setShowNoLivesModal(true);
+        return;
+      }
+      
+      setGameStarted(true);
+    }
     
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -366,15 +410,19 @@ const MatchingGameScreen: React.FC = () => {
     setAllLevelsCompleted(false);
   };
 
-  const startGame = () => {
+  const startGame = async () => {
     if (!isMounted.current) return;
     
+    // Reset game state tanpa mengurangi nyawa
     setCurrentLevelIndex(0);
     setAllLevelsCompleted(false);
+    setGameStarted(false);
+    
+    // Initialize level 0
     initializeLevel(0);
   };
 
-  const handleLevelComplete = () => {
+  const handleLevelComplete = async () => {
     setIsGameActive(false);
     
     if (timerRef.current) {
@@ -413,8 +461,15 @@ const MatchingGameScreen: React.FC = () => {
       } else {
         setAllLevelsCompleted(true);
         
-        const handleRestart = () => {
+        // Reward player with an extra life for completing all levels
+        const handleRestart = async () => {
           hideModal();
+          
+          // Add bonus life for completing all levels
+          await livesManager.addLife();
+          const updatedInfo = await livesManager.getLivesInfo();
+          setLivesInfo(updatedInfo);
+          
           setTimeout(() => {
             if (!isMounted.current) return;
             startGame();
@@ -423,27 +478,33 @@ const MatchingGameScreen: React.FC = () => {
         
         showModal(
           "Selamat!",
-          "Kamu telah menyelesaikan semua level dengan sukses!",
+          "Kamu telah menyelesaikan semua level dengan sukses! Kamu mendapatkan tambahan nyawa!",
           "Main Lagi dari Awal",
           handleRestart,
           undefined,
           undefined,
           require('../../assets/images/tampilan/AstronoutGameA.png')
+          
         );
       }
     }, 500);
   };
 
-  const handleGameOver = () => {
+  const handleGameOver = async () => {
     setIsGameActive(false);
     
     if (!isMounted.current) return;
+    
+    // When game over, check lives status
+    const info = await livesManager.getLivesInfo();
+    setLivesInfo(info);
     
     setTimeout(() => {
       if (!isMounted.current) return;
       
       const handleRetry = () => {
         hideModal();
+        
         setTimeout(() => {
           if (!isMounted.current) return;
           initializeLevel(currentLevelIndex);
@@ -452,9 +513,11 @@ const MatchingGameScreen: React.FC = () => {
       
       const handleRestartGame = () => {
         hideModal();
+        
         setTimeout(() => {
           if (!isMounted.current) return;
-          startGame();
+          setCurrentLevelIndex(0);
+          initializeLevel(0);
         }, 100);
       };
       
@@ -487,7 +550,8 @@ const MatchingGameScreen: React.FC = () => {
     router.push('/mainmenu');
   };
 
-  const handleItemSelect = (item: WordItem) => {
+  // Modifikasi handleItemSelect untuk mengurangi nyawa saat jawaban salah
+  const handleItemSelect = async (item: WordItem) => {
     if (!isGameActive || !isMounted.current) return;
     
     if (matchedPairs.includes(item.pairId)) {
@@ -505,10 +569,43 @@ const MatchingGameScreen: React.FC = () => {
     }
 
     if (selectedItem.pairId === item.pairId) {
+      // Jawaban benar - pasangan cocok
       setMatchedPairs([...matchedPairs, item.pairId]);
       setSelectedItem(null);
     } else {
+      // Jawaban salah - pasangan tidak cocok
       setSelectedItem(item);
+      
+      // Kurangi nyawa untuk jawaban salah
+      const reduceLife = async () => {
+        const stillHasLives = await livesManager.useLife();
+        const updatedInfo = await livesManager.getLivesInfo();
+        setLivesInfo(updatedInfo);
+        
+        // Tampilkan pesan pengurangan nyawa
+        setModalTitle("Jawaban Salah!");
+        setModalMessage(`Pasangan tidak cocok. Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`);
+        setModalPrimaryButtonText("OK");
+        setModalPrimaryButtonAction(() => {
+          setShowLivesDeductionModal(false);
+          
+          // Jika nyawa habis, tampilkan modal no lives
+          if (!stillHasLives || updatedInfo.lives <= 0) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            
+            setIsGameActive(false);
+            setShowNoLivesModal(true);
+          }
+        });
+        setModalImage(require('../../assets/images/tampilan/wrongpopup.png'));
+        setShowLivesDeductionModal(true);
+      };
+      
+      reduceLife();
+      
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -526,6 +623,17 @@ const MatchingGameScreen: React.FC = () => {
 
   const isItemMatched = (item: WordItem) => {
     return matchedPairs.includes(item.pairId);
+  };
+
+  // Handle lives update from LivesDisplay
+  const handleLivesUpdated = (info: LivesInfo) => {
+    setLivesInfo(info);
+  };
+  
+  // Close no lives modal and return to main menu
+  const handleNoLivesGoHome = () => {
+    setShowNoLivesModal(false);
+    goToMainMenu();
   };
 
   const renderCompletionScreen = () => {
@@ -557,6 +665,41 @@ const MatchingGameScreen: React.FC = () => {
     );
   };
 
+  // Show pre-game screen if not started yet
+  const renderPreGameScreen = () => {
+    return (
+      <View style={styles.preGameContainer}>
+        <Text style={styles.preGameTitle}>Carakan - Nan Maenan</Text>
+        <Text style={styles.preGameDescription}>
+          Pilih pasangan kata yang cocok. Nyawa akan berkurang jika kamu salah memilih pasangan.
+        </Text>
+        
+        <Image 
+          source={require('../../assets/images/tampilan/AstronoutGameA.png')} 
+          style={styles.preGameImage} 
+          resizeMode="contain"
+        />
+        
+        <TouchableOpacity
+          style={styles.startButton}
+          onPress={() => initializeLevel(0)}
+          disabled={livesInfo.lives <= 0}
+        >
+          <Text style={styles.startButtonText}>
+            Mulai Permainan {livesInfo.lives <= 0 ? "(Nyawa Habis)" : ""}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.startButton, styles.menuButton]}
+          onPress={goToMainMenu}
+        >
+          <Text style={styles.menuButtonText}>Kembali ke Menu Utama</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomModal
@@ -568,6 +711,25 @@ const MatchingGameScreen: React.FC = () => {
         secondaryButtonText={modalSecondaryButtonText}
         secondaryButtonAction={modalSecondaryButtonAction}
         imageSource={modalImage}
+        onClose={hideModal}
+      />
+      
+      {/* Lives Deduction Modal */}
+      <CustomModal
+        visible={showLivesDeductionModal}
+        title={modalTitle}
+        message={modalMessage}
+        primaryButtonText={modalPrimaryButtonText}
+        primaryButtonAction={modalPrimaryButtonAction}
+        imageSource={modalImage}
+      />
+      
+      {/* No Lives Modal */}
+      <NoLivesModal
+        visible={showNoLivesModal}
+        onClose={() => setShowNoLivesModal(false)}
+        onGoHome={handleNoLivesGoHome}
+        timeUntilNextLife={livesInfo.timeUntilNextLife}
       />
 
       <View style={styles.header}>
@@ -582,10 +744,18 @@ const MatchingGameScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
+      
+      {/* Lives Display */}
+      <LivesDisplay onLivesUpdated={handleLivesUpdated} />
 
-      {allLevelsCompleted ? (
+      {!gameStarted ? (
+        // Show pre-game screen
+        renderPreGameScreen()
+      ) : allLevelsCompleted ? (
+        // Show completion screen
         renderCompletionScreen()
       ) : (
+        // Main game screen
         <>
           <View style={styles.gameInfoContainer}>
             <Text style={styles.gameTitle}>Nan Maenan</Text>
@@ -875,8 +1045,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     borderColor: '#1B4D89',
-    marginBottom: 10, // Tambahkan margin bottom
-    width: '80%', // Tetapkan lebar yang konsisten
+    marginBottom: 10,
+    width: '80%',
     alignItems: 'center',
   },
   startButtonText: {
@@ -884,7 +1054,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1B4D89',
   },
-  // Tambahkan style untuk tombol menu
+  // Pre-game screen styles
+  preGameContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  preGameTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1E3A8A',
+    marginBottom: 16,
+  },
+  preGameDescription: {
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  preGameImage: {
+    width: 200,
+    height: 150,
+    marginBottom: 30,
+  },
+  // Modal styles
   menuButton: {
     backgroundColor: '#1E3A8A',
     borderColor: '#4D5BD1',
@@ -914,6 +1108,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 5,
+    position: 'relative', // Untuk tombol close
   },
   modalImage: {
     width: 150,
@@ -969,6 +1164,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: '#ccc',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 

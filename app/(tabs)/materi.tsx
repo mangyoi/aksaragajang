@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SafeAreaView, ScrollView, View, Text, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, BackHandler } from 'react-native';
+import { 
+  SafeAreaView,
+  ScrollView, 
+  View, 
+  Text, 
+  Image, 
+  StyleSheet, 
+  Dimensions, 
+  FlatList, 
+  TouchableOpacity, 
+  Modal, 
+  BackHandler 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -106,7 +118,7 @@ const CarakanApp = () => {
 
     try {
       const endTime = new Date();
-      const timeSpent = Math.floor((endTime.getTime() - startTimeRef.current.getTime()) / 1000); // in seconds
+      const timeSpent = Math.floor((endTime.getTime() - startTimeRef.current.getTime()) / 1000); 
       
       console.log('Time spent on materi:', timeSpent, 'seconds');
 
@@ -128,7 +140,7 @@ const CarakanApp = () => {
             ...streakData,
             lastMaterialAccess: endTime.toISOString(),
             materialTimeSpent: totalTimeSpent,
-            isStreakActive: totalTimeSpent >= 60 // Active if spent at least 60 seconds
+            isStreakActive: totalTimeSpent >= 60
           };
           
           await AsyncStorage.setItem('userStreakData', JSON.stringify(updatedStreakData));
@@ -312,28 +324,42 @@ const CarakanApp = () => {
       </Modal>
 
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         visible={timeSpentAlert}
         onRequestClose={() => setTimeSpentAlert(false)}
       >
         <View style={styles.centeredView}>
-          <View style={styles.alertModal}>
-            <Image 
-              source={require('../../assets/images/tampilan/icon/fire-on.png')}
-              style={styles.alertIcon}
-            />
-            <Text style={styles.alertTitle}>Streak Aktif!</Text>
-            <Text style={styles.alertMessage}>
-              Selamat! Anda telah belajar selama 1 menit.{'\n'}
-              Streak hari ini sudah aktif!
-            </Text>
-            <TouchableOpacity
-              style={styles.alertButton}
-              onPress={() => setTimeSpentAlert(false)}
-            >
-              <Text style={styles.alertButtonText}>OK</Text>
-            </TouchableOpacity>
+          <View style={styles.streakModalView}>
+            <View style={styles.streakModalHeader}>
+              <Text style={styles.streakModalTitle}>Streak Aktif!</Text>
+              <TouchableOpacity
+                onPress={() => setTimeSpentAlert(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>X</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.streakModalContent}>
+              <Image 
+                source={require('../../assets/images/tampilan/icon/fire-on.png')}
+                style={styles.streakIcon}
+              />
+              <Text style={styles.streakMessage}>
+                Selamat! Anda telah belajar selama 1 menit.{'\n'}
+                Streak hari ini sudah aktif!
+              </Text>
+            </View>
+            
+            <View style={styles.streakModalFooter}>
+              <TouchableOpacity
+                style={styles.streakButton}
+                onPress={() => setTimeSpentAlert(false)}
+              >
+                <Text style={styles.streakButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -573,6 +599,71 @@ const styles = StyleSheet.create({
   pronounceLetter: {
     fontSize: 20,
     color: '#000',
+  },
+  streakModalView: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: width * 0.9,
+    padding: 0,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  streakModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F7DA30',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  streakModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1B4D89',
+  },
+  streakModalContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  streakIcon: {
+    width: 70,
+    height: 70,
+    marginBottom: 15,
+  },
+  streakMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    lineHeight: 22,
+    marginVertical: 15,
+  },
+  streakModalFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+    padding: 15,
+    alignItems: 'center',
+  },
+  streakButton: {
+    backgroundColor: '#1B4D89',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  streakButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   alertModal: {
     backgroundColor: 'white',

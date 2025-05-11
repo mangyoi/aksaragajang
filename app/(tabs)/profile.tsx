@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView,
-  Dimensions, Alert, Modal, Image, TextInput, ActivityIndicator
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView,
+  TouchableOpacity, 
+  ScrollView,
+  Dimensions, 
+  Alert, 
+  Modal, 
+  Image, 
+  TextInput, 
+  ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,7 +29,6 @@ type StreakData = {
   materialTimeSpent?: number;
 };
 
-// Type for displayed streak day
 type StreakDay = {
   dayNumber: number;
   isActive: boolean;
@@ -34,7 +43,6 @@ const ProfileScreen = () => {
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0);
   
-  // Password change states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -67,7 +75,6 @@ const ProfileScreen = () => {
         return;
       }
 
-      // Set user name
       if (user.displayName) {
         setUserName(user.displayName);
       } else {
@@ -75,7 +82,6 @@ const ProfileScreen = () => {
         setUserName(emailPrefix);
       }
 
-      // Load streak data
       const storedStreakData = await AsyncStorage.getItem('userStreakData');
       if (storedStreakData) {
         const streakData = JSON.parse(storedStreakData) as StreakData;
@@ -91,13 +97,11 @@ const ProfileScreen = () => {
     const currentStreak = streakData.streak;
     const displayDays: StreakDay[] = [];
     
-    // Determine the starting day number based on the current streak
     let startDay = 1;
     if (currentStreak > 7) {
-      startDay = currentStreak - 6; // Show the last 7 days of the streak
+      startDay = currentStreak - 6; 
     }
     
-    // Generate the 7 days to display
     for (let i = 0; i < 7; i++) {
       const dayNumber = startDay + i;
       const isActive = dayNumber < currentStreak || (dayNumber === currentStreak && streakData.isStreakActive);
@@ -141,28 +145,23 @@ const ProfileScreen = () => {
   };
   
   const validatePasswordChange = () => {
-    // Reset error messages
     setPasswordError('');
     
-    // Validate current password
     if (!currentPassword) {
       setPasswordError('Password saat ini harus diisi');
       return false;
     }
     
-    // Validate new password
     if (!newPassword) {
       setPasswordError('Password baru harus diisi');
       return false;
     }
     
-    // Check password length
     if (newPassword.length < 6) {
       setPasswordError('Password baru minimal 6 karakter');
       return false;
     }
     
-    // Confirm password
     if (newPassword !== confirmPassword) {
       setPasswordError('Password baru tidak cocok dengan konfirmasi');
       return false;
@@ -172,7 +171,6 @@ const ProfileScreen = () => {
   };
   
   const handlePasswordChange = async () => {
-    // Validate inputs
     if (!validatePasswordChange()) {
       return;
     }
@@ -186,22 +184,17 @@ const ProfileScreen = () => {
         throw new Error('User tidak ditemukan');
       }
       
-      // Re-authenticate the user
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, credential);
       
-      // Update the password
       await updatePassword(user, newPassword);
       
-      // Success
       setPasswordSuccess(true);
       
-      // Reset fields
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       
-      // Close modal after 2 seconds
       setTimeout(() => {
         setPasswordSuccess(false);
         setChangePasswordModalVisible(false);
@@ -210,7 +203,6 @@ const ProfileScreen = () => {
     } catch (error: any) {
       console.error('Error changing password:', error);
       
-      // Handle specific error cases
       if (error.code === 'auth/wrong-password') {
         setPasswordError('Password saat ini salah');
       } else if (error.code === 'auth/too-many-requests') {
@@ -299,7 +291,6 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Logout Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -322,7 +313,6 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </Modal>
       
-      {/* Change Password Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -599,7 +589,6 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 24,
   },
-  // Password Modal Styles
   passwordModalContent: {
     backgroundColor: '#FFF',
     borderRadius: 20,

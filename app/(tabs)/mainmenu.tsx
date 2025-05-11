@@ -1,5 +1,4 @@
 import { auth } from '../../utils/firebase/config';
-import { signOut } from 'firebase/auth';
 import { 
   View, 
   Text, 
@@ -7,7 +6,6 @@ import {
   StyleSheet, 
   Image, 
   SafeAreaView, 
-  Alert,
   Modal
 } from 'react-native';
 import { useRouter } from 'expo-router';
