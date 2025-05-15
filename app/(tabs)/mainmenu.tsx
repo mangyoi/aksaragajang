@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 type StreakData = {
   streak: number;
@@ -29,10 +30,14 @@ const MainMenu = () => {
   const [isStreakActive, setIsStreakActive] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);  
   
+  // Add focus effect to check material time when returning to this screen
+  useFocusEffect(
+    React.useCallback(() => {
+      checkMaterialTime();
+    }, [])
+  );
 
   useEffect(() => {
-
-
     const loadUserData = async () => {
       try {
         const user = auth.currentUser;
@@ -55,8 +60,49 @@ const MainMenu = () => {
     };
 
     loadUserData();
-
   }, []);
+
+  const checkMaterialTime = async () => {
+    try {
+      const startTimeString = await AsyncStorage.getItem('materiStartTime');
+      if (startTimeString) {
+        const startTime = new Date(startTimeString).getTime();
+        const endTime = new Date().getTime();
+        const timeSpentSeconds = Math.floor((endTime - startTime) / 1000);
+        
+        // Save the time spent
+        const today = new Date().toDateString();
+        const storedStreakData = await AsyncStorage.getItem('userStreakData');
+        
+        if (storedStreakData) {
+          const parsedData = JSON.parse(storedStreakData) as StreakData;
+          
+          // Update material time spent for today
+          const updatedData: StreakData = {
+            ...parsedData,
+            lastMaterialAccess: new Date().toISOString(),
+            materialTimeSpent: timeSpentSeconds
+          };
+          
+          // Check if streak should be activated (60 seconds = 1 minute)
+          if (timeSpentSeconds >= 60) {
+            updatedData.isStreakActive = true;
+            setIsStreakActive(true);
+          }
+          
+          await AsyncStorage.setItem('userStreakData', JSON.stringify(updatedData));
+        }
+        
+        // Clear the start time
+        await AsyncStorage.removeItem('materiStartTime');
+        
+        // Refresh streak status
+        await checkAndUpdateStreak();
+      }
+    } catch (error) {
+      console.error('Error checking material time:', error);
+    }
+  };
 
   const checkAndUpdateStreak = async (): Promise<void> => {
     try {
@@ -88,15 +134,15 @@ const MainMenu = () => {
             await saveStreakData(1, today, false);
           }
         } else {
-          if (lastMaterialAccess && materialTimeSpent) {
-            const timeSinceLastAccess = new Date().getTime() - new Date(lastMaterialAccess).getTime();
-            const timeSpentToday = materialTimeSpent;
+          // Check if user spent enough time in material today
+          if (lastMaterialAccess && materialTimeSpent !== undefined) {
+            const materialAccessDate = new Date(lastMaterialAccess).toDateString();
             
-            if (timeSpentToday >= 60) {
+            if (materialAccessDate === today && materialTimeSpent >= 60) {
               setIsStreakActive(true);
               await saveStreakData(streak, today, true, lastMaterialAccess, materialTimeSpent);
             } else {
-              setIsStreakActive(false);
+              setIsStreakActive(storedStreakActive || false);
             }
           } else {
             setIsStreakActive(storedStreakActive || false);
@@ -134,6 +180,7 @@ const MainMenu = () => {
   };
 
   const handleMateriNavigation = () => {
+    // Save start time when navigating to materi
     AsyncStorage.setItem('materiStartTime', new Date().toISOString());
     router.push('/materi');
   };
@@ -418,7 +465,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  
 });
 
 export default MainMenu;

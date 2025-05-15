@@ -1,4 +1,4 @@
-//gameB.tsx with Lives System and Life Deduction on Wrong Answer
+//gameB.tsx with Lives System and Life Deduction on Wrong Answer - Text Version
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -20,14 +20,15 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface AksaraOption {
   id: number;
-  image: any;
+  text: string;
   letter: string;
   isCorrect: boolean;
 }
 
 interface Question {
   id: number;
-  questionImage: any;
+  questionText: string;
+  incompleteWord: string;
   options: AksaraOption[];
 }
 
@@ -53,150 +54,155 @@ const NanMaenanGameScreen: React.FC = () => {
   const questions: Question[] = [
     {
       id: 1,
-      questionImage: require('../../assets/images/tampilan/soal/acaca.png'),
+      questionText: "Lengkapi kata berikut:",
+      incompleteWord: "a _ a _ a",
       options: [
         { 
           id: 1, 
-          image: require('../../assets/images/tampilan/aksara/na.png'), 
-          letter: 'C',
+          text: "na", 
+          letter: 'na',
           isCorrect: false
         },
         { 
           id: 2, 
-          image: require('../../assets/images/tampilan/aksara/ca.png'), 
-          letter: 'A',
+          text: "ca", 
+          letter: 'ca',
           isCorrect: true
         },
         { 
           id: 3, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'N',
+          text: "a", 
+          letter: 'a',
           isCorrect: false
         },
         { 
           id: 4, 
-          image: require('../../assets/images/tampilan/aksara/ra.png'), 
-          letter: 'H',
+          text: "ra", 
+          letter: 'ra',
           isCorrect: false
         }
       ]
     },
     {
       id: 2,
-      questionImage: require('../../assets/images/tampilan/soal/arapa.png'),
+      questionText: "Lengkapi kata berikut:",
+      incompleteWord: "a _ a _ a",
       options: [
         { 
           id: 1, 
-          image: require('../../assets/images/tampilan/aksara/ra.png'), 
-          letter: 'C',
+          text: "ra", 
+          letter: 'ra',
           isCorrect: true
         },
         { 
           id: 2, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'A',
+          text: "a", 
+          letter: 'a',
           isCorrect: false
         },
         { 
           id: 3, 
-          image: require('../../assets/images/tampilan/aksara/na.png'), 
-          letter: 'N',
+          text: "na", 
+          letter: 'na',
           isCorrect: false
         },
         { 
           id: 4, 
-          image: require('../../assets/images/tampilan/aksara/ca.png'), 
-          letter: 'H',
+          text: "ca", 
+          letter: 'ca',
           isCorrect: false
         }
       ]
     },
     {
       id: 3,
-      questionImage: require('../../assets/images/tampilan/soal/atapa.png'),
+      questionText: "Lengkapi kata berikut:",
+      incompleteWord: "a _ a _ a",
       options: [
         { 
           id: 1, 
-          image: require('../../assets/images/tampilan/aksara/ka.png'), 
-          letter: 'C',
+          text: "ka", 
+          letter: 'ka',
           isCorrect: false
         },
         { 
           id: 2, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'A',
+          text: "a", 
+          letter: 'a',
           isCorrect: false
         },
         { 
           id: 3, 
-          image: require('../../assets/images/tampilan/aksara/ta.png'), 
-          letter: 'N',
+          text: "ta", 
+          letter: 'ta',
           isCorrect: true
         },
         { 
           id: 4, 
-          image: require('../../assets/images/tampilan/aksara/da.png'), 
-          letter: 'H',
+          text: "da", 
+          letter: 'da',
           isCorrect: false
         }
       ]
     },
     {
       id: 4,
-      questionImage: require('../../assets/images/tampilan/soal/acara.png'),
+      questionText: "Lengkapi kata berikut:",
+      incompleteWord: "a _ a _ a",
       options: [
         { 
           id: 1, 
-          image: require('../../assets/images/tampilan/aksara/ka.png'), 
-          letter: 'C',
+          text: "ka", 
+          letter: 'ka',
           isCorrect: false
         },
         { 
           id: 2, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'A',
+          text: "a", 
+          letter: 'a',
           isCorrect: false
         },
         { 
           id: 3, 
-          image: require('../../assets/images/tampilan/aksara/ra.png'), 
-          letter: 'N',
+          text: "ra", 
+          letter: 'ra',
           isCorrect: false
         },
         { 
           id: 4, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'H',
+          text: "a", 
+          letter: 'a',
           isCorrect: true
         }
       ]
     },
     {
       id: 5,
-      questionImage: require('../../assets/images/tampilan/soal/sala.png'),
+      questionText: "Lengkapi kata berikut:",
+      incompleteWord: "sa _ a",
       options: [
         { 
           id: 1, 
-          image: require('../../assets/images/tampilan/aksara/ca.png'), 
-          letter: 'C',
+          text: "ca", 
+          letter: 'ca',
           isCorrect: false
         },
         { 
           id: 2, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'A',
+          text: "a", 
+          letter: 'a',
           isCorrect: false
         },
         { 
           id: 3, 
-          image: require('../../assets/images/tampilan/aksara/la.png'), 
-          letter: 'N',
+          text: "la", 
+          letter: 'la',
           isCorrect: true
         },
         { 
           id: 4, 
-          image: require('../../assets/images/tampilan/aksara/a.png'), 
-          letter: 'H',
+          text: "na", 
+          letter: 'na',
           isCorrect: false
         }
       ]
@@ -407,12 +413,9 @@ const NanMaenanGameScreen: React.FC = () => {
           // Game content
           <>
             <View style={styles.mainSymbolContainer}>
-              <View style={styles.aksaraContainer}>
-                <Image 
-                  source={currentQuestion.questionImage} 
-                  style={styles.aksaraImage}
-                  resizeMode="contain"
-                />
+              <View style={styles.questionContainer}>
+                <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
+                <Text style={styles.incompleteWord}>{currentQuestion.incompleteWord}</Text>
               </View>
               <Text style={styles.aksaraLabel}>Isilah aksara yang hilang</Text>
             </View>
@@ -434,11 +437,7 @@ const NanMaenanGameScreen: React.FC = () => {
                         ]}
                         onPress={() => handleOptionSelect(aksara.id)}
                       >
-                        <Image 
-                          source={aksara.image}
-                          style={styles.aksaraOptionImage}
-                          resizeMode="contain"
-                        />
+                        <Text style={styles.optionText}>{aksara.text}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -591,15 +590,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 15
   },
-  aksaraContainer: {
+  questionContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%'
-  },
-  aksaraImage: {
     width: '100%',
-    height: 120,
     marginBottom: 10
+  },
+  questionText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 10,
+    textAlign: 'center'
+  },
+  incompleteWord: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: 'white',
+    letterSpacing: 5,
+    textAlign: 'center'
   },
   aksaraLabel: {
     fontSize: 16,
@@ -654,9 +663,10 @@ const styles = StyleSheet.create({
     borderColor: '#F44336',
     backgroundColor: '#FFCDD2'
   },
-  aksaraOptionImage: {
-    width: '80%',
-    height: '80%',
+  optionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1B4D89',
   },
   bottomPadding: {
     height: 20

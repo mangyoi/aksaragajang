@@ -98,6 +98,16 @@ const CarakanApp = () => {
   useEffect(() => {
     startTimeRef.current = new Date();
     console.log('Started tracking time at:', startTimeRef.current);
+    const hasShownStreakToday = async (): Promise<boolean> => {
+    const shownDate = await AsyncStorage.getItem('streakShownDate');
+    const today = new Date().toDateString();
+    return shownDate === today;
+    };
+
+    const markStreakShownToday = async () => {
+    const today = new Date().toDateString();
+    await AsyncStorage.setItem('streakShownDate', today);
+    };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
 
@@ -114,43 +124,54 @@ const CarakanApp = () => {
   };
 
   const updateTimeSpent = async () => {
-    if (!startTimeRef.current) return;
+  if (!startTimeRef.current) return;
 
-    try {
-      const endTime = new Date();
-      const timeSpent = Math.floor((endTime.getTime() - startTimeRef.current.getTime()) / 1000); 
-      
-      console.log('Time spent on materi:', timeSpent, 'seconds');
+  try {
+    const endTime = new Date();
+    const timeSpent = Math.floor((endTime.getTime() - startTimeRef.current.getTime()) / 1000);
 
-      const storedStreakData = await AsyncStorage.getItem('userStreakData');
-      if (storedStreakData) {
-        const streakData = JSON.parse(storedStreakData) as StreakData;
-        const today = new Date().toDateString();
-        
-        if (streakData.lastLogin === today) {
-          const totalTimeSpent = (streakData.materialTimeSpent || 0) + timeSpent;
-          
-          console.log('Total time spent today:', totalTimeSpent, 'seconds');
+    console.log('Time spent on materi:', timeSpent, 'seconds');
 
-          if (streakData.materialTimeSpent < 60 && totalTimeSpent >= 60) {
-            setTimeSpentAlert(true);
-          }
-          
-          const updatedStreakData: StreakData = {
-            ...streakData,
-            lastMaterialAccess: endTime.toISOString(),
-            materialTimeSpent: totalTimeSpent,
-            isStreakActive: totalTimeSpent >= 60
-          };
-          
-          await AsyncStorage.setItem('userStreakData', JSON.stringify(updatedStreakData));
-          console.log('Updated streak data:', updatedStreakData);
+    const storedStreakData = await AsyncStorage.getItem('userStreakData');
+    if (storedStreakData) {
+      const streakData = JSON.parse(storedStreakData) as StreakData;
+      const today = new Date().toDateString();
+
+      if (streakData.lastLogin === today) {
+        const totalTimeSpent = (streakData.materialTimeSpent || 0) + timeSpent;
+
+        console.log('Total time spent today:', totalTimeSpent, 'seconds');
+
+        const updatedStreakData: StreakData = {
+          ...streakData,
+          lastMaterialAccess: endTime.toISOString(),
+          materialTimeSpent: totalTimeSpent,
+          isStreakActive: totalTimeSpent >= 60
+        };
+
+        await AsyncStorage.setItem('userStreakData', JSON.stringify(updatedStreakData));
+
+        // 🟡 Cek jika mencapai 60 detik dan modal belum pernah muncul hari ini
+        if (
+          streakData.materialTimeSpent < 60 &&
+          totalTimeSpent >= 60
+        ) {
+          (async () => {
+            const alreadyShown = await hasShownStreakToday();
+            if (!alreadyShown) {
+              setTimeSpentAlert(true);
+              await markStreakShownToday();
+            }
+          })();
         }
+
       }
-    } catch (error) {
-      console.error('Error updating time spent:', error);
     }
-  };
+  } catch (error) {
+    console.error('Error updating time spent:', error);
+  }
+};
+
 
   const handleBackNavigation = () => {
     updateTimeSpent();
@@ -178,7 +199,7 @@ const CarakanApp = () => {
   }, []);
 
   const renderSowaraItem = ({ item }: { item: SowaraItem }) => (
-    <View style={styles.sowaraItem}>
+    <View style={styles.sowaraItemContainer}>
       {item.imageSource ? (
         <View style={styles.sowaraCircle}>
           <Image 
@@ -188,12 +209,12 @@ const CarakanApp = () => {
         </View>
       ) : (
         <TouchableOpacity 
-          style={styles.sowaraCircle}
+          style={styles.sowaraCircleMore}
           onPress={() => setPronounceModalVisible(true)}
         >
           <View style={styles.dotContainer}>
             {[...Array(9)].map((_, index) => (
-              <View key={index} style={styles.dot} />
+              <View key={index} style={styles.dotPattern} />
             ))}
           </View>
         </TouchableOpacity>
@@ -202,48 +223,57 @@ const CarakanApp = () => {
   );
 
   const renderContoItem = (item: ContoItem) => (
-    <View key={item.id} style={styles.contoRow}>
-      <View style={styles.contoBox}>
+    <View key={item.id} style={styles.contoCard}>
+      <View style={styles.contoImageBox}>
         <Image 
           source={item.imageSource}
           style={styles.contoImage}
         />
       </View>
-      <View style={styles.contoTextContainer}>
+      <View style={styles.contoTextBox}>
         <Text style={styles.contoText}>{item.text}</Text>
       </View>
     </View>
   );
 
   const renderPronounceItem = ({ item }: { item: PronounceItem }) => (
-    <View style={styles.pronounceItem}>
+    <TouchableOpacity style={styles.pronounceItem}>
       <Image 
         source={item.imageSource}
         style={styles.pronounceImage}
       />
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Carakan</Text>
-          <View style={styles.rightHeaderSpace} />
-        </View>
+      {/* Header - Centered Title Only */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Carakan</Text>
+      </View>
 
-        <View style={styles.contentContainer}>
-          <TouchableOpacity 
-            onPress={handleBackNavigation} 
-            style={styles.backButton}
-          >
-            <Image 
-              source={require('../../assets/images/tampilan/icon/left-arrow.png')}
-              style={styles.backIcon}
-            />
-          </TouchableOpacity>
-          
-          <View style={styles.imgBox}>
+      {/* Back Button - Positioned below header */}
+      <View style={styles.backButtonContainer}>
+        <TouchableOpacity 
+          onPress={handleBackNavigation} 
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <Image 
+            source={require('../../assets/images/tampilan/icon/left-arrow.png')}
+            style={styles.backIcon}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Image Slider Section */}
+        <View style={styles.sliderSection}>
+          <View style={styles.sliderCard}>
             <FlatList
               data={mainImages} 
               renderItem={({ item }) => (
@@ -267,77 +297,103 @@ const CarakanApp = () => {
                 <View
                   key={index}
                   style={[
-                    styles.dot,
-                    currentIndex === index && styles.activeDot, 
+                    styles.indicatorDot,
+                    currentIndex === index && styles.activeIndicatorDot, 
                   ]}
                 />
               ))}
             </View>
           </View>
+        </View>
+        
+        {/* Sowara Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Sowara</Text>
+            <View style={styles.sectionDivider} />
+          </View>
           
-          <Text style={styles.sectionTitle}>Sowara</Text>
-          <FlatList
-            data={sowaraData}
-            renderItem={renderSowaraItem}
-            keyExtractor={(item) => item.id}
-            horizontal={true}
-            contentContainerStyle={styles.sowaraList}
-            scrollEnabled={false}
-          />
+          <View style={styles.sowaraCard}>
+            <FlatList
+              data={sowaraData}
+              renderItem={renderSowaraItem}
+              keyExtractor={(item) => item.id}
+              horizontal={true}
+              contentContainerStyle={styles.sowaraList}
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={true}
+            />
+          </View>
+        </View>
+        
+        {/* Contoh Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Kaangguy Conto</Text>
+            <View style={styles.sectionDivider} />
+          </View>
           
-          <Text style={styles.sectionTitle}>Kaangguy Conto</Text>
-          <View style={styles.contoContainer}>
+          <View style={styles.contoSection}>
             {conto.map(item => renderContoItem(item))}
           </View>
         </View>
+
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
+      {/* Modal untuk Pronounce */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={pronounceModalVisible}
         onRequestClose={() => setPronounceModalVisible(false)}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>sowara aksara</Text>
               <TouchableOpacity
                 onPress={() => setPronounceModalVisible(false)}
                 style={styles.closeButton}
               >
-                <Text style={styles.closeButtonText}>X</Text>
+                <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.pronounceTitle}>pece' kaangguy{'\n'}ngeding agi</Text>
+            <View style={styles.modalBody}>
+              <Text style={styles.pronounceTitle}>
+                pece' kaangguy{'\n'}ngeding agi
+              </Text>
 
-            <FlatList
-              data={pronounceData}
-              renderItem={renderPronounceItem}
-              keyExtractor={item => item.id}
-              numColumns={4}
-              contentContainerStyle={styles.pronounceGrid}
-            />
+              <FlatList
+                data={pronounceData}
+                renderItem={renderPronounceItem}
+                keyExtractor={item => item.id}
+                numColumns={4}
+                contentContainerStyle={styles.pronounceGrid}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
           </View>
         </View>
       </Modal>
 
+      {/* Modal untuk Streak Alert */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={timeSpentAlert}
         onRequestClose={() => setTimeSpentAlert(false)}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.streakModalView}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.streakModalContainer}>
             <View style={styles.streakModalHeader}>
-              <Text style={styles.streakModalTitle}>Streak Aktif!</Text>
+              <Text style={styles.streakModalTitle}>🔥 Streak Aktif!</Text>
               <TouchableOpacity
                 onPress={() => setTimeSpentAlert(false)}
                 style={styles.closeButton}
               >
-                <Text style={styles.closeButtonText}>X</Text>
+                <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
             
@@ -350,14 +406,12 @@ const CarakanApp = () => {
                 Selamat! Anda telah belajar selama 1 menit.{'\n'}
                 Streak hari ini sudah aktif!
               </Text>
-            </View>
-            
-            <View style={styles.streakModalFooter}>
+              
               <TouchableOpacity
                 style={styles.streakButton}
                 onPress={() => setTimeSpentAlert(false)}
               >
-                <Text style={styles.streakButtonText}>OK</Text>
+                <Text style={styles.streakButtonText}>Mantap!</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -370,86 +424,133 @@ const CarakanApp = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
+  
+  // Header Styles - Only for title
   header: {
-    backgroundColor: '#F7DA30',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#F7DA30',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderTopWidth: 0,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1B4D89',
+    textAlign: 'center',
+  },
+  
+  // Back Button Container - Positioned below header
+  backButtonContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    marginBottom: 16, 
-    alignSelf: 'flex-start', 
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignSelf: 'flex-start',
   },
   backIcon: {
     width: 24,
     height: 24,
     resizeMode: 'contain',
   },
-  headerText: {
+  
+  // Scroll View Styles
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 30,
+  },
+  
+  // Slider Section
+  sliderSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12, // Reduced since back button has its own padding
+  },
+  sliderCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  slideImage: {
+    width: width - 72, 
+    height: 200, 
+    resizeMode: 'contain',
+    borderRadius: 12,
+  },
+  sliderIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  indicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0', 
+    marginHorizontal: 4,
+  },
+  activeIndicatorDot: {
+    backgroundColor: '#1B4D89', 
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  
+  // Section Styles
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 24,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#1B4D89',
+    marginBottom: 8,
   },
-  rightHeaderSpace: {
-    width: 40,
+  sectionDivider: {
+    height: 3,
+    backgroundColor: '#F7DA30',
+    width: 50,
+    borderRadius: 2,
   },
-  contentContainer: {
-    padding: 16,
-  },
-  imgBox: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8, 
-    marginBottom: 16, 
-  },
-  slideImage: {
-    width: width * 0.9, 
-    height: 200, 
-    resizeMode: 'contain',
-    marginHorizontal: 5,
-  },
-  titleImage: {
-    borderRadius: 12,
-    width: '132%',
-    height: undefined,
-    aspectRatio: 2 / 1,
-    resizeMode: 'contain',
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B4D89',
-    marginBottom: 16,
+  
+  // Sowara Styles
+  sowaraCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   sowaraList: {
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 24,
+    paddingHorizontal: 10,
   },
-  sowaraItem: {
+  sowaraItemContainer: {
     alignItems: 'center',
-    marginRight: 10,
+    marginHorizontal: 10,
   },
   sowaraCircle: {
     width: 70,
@@ -458,256 +559,215 @@ const styles = StyleSheet.create({
     backgroundColor: '#7E80D8',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  sowaraCircleMore: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#E8E9FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderStyle: 'dashed',
   },
   sowaraImage: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     resizeMode: 'contain',
   },
-  sowaraText: {
-    fontSize: 22,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
   dotContainer: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sliderIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
+  dotPattern: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#7E80D8',
+    borderWidth: 1,
+    borderColor: '#000000',
+    margin: 2,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#C4C4C4', 
-    marginHorizontal: 4,
+  
+  // Contoh Styles
+  contoSection: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#000000',
   },
-  activeDot: {
-    backgroundColor: '#1B4D89', 
-    width: 10,
-    height: 10,
-  },
-  contoContainer: {
-    width: '100%',
-  },
-  contoRow: {
+  contoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#000000',
   },
-  contoBox: {
-    width: 140,
+  contoImageBox: {
+    width: 80,
     height: 50,
     borderRadius: 25,
     backgroundColor: '#7E80D8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 30,
     overflow: 'hidden',
+    marginRight: 16,
   },
   contoImage: {
-    width: '200%',
-    height: '200%',
+    width: '160%',
+    height: '160%',
     resizeMode: 'cover',
   },
-  contoTextContainer: {
+  contoTextBox: {
     flex: 1,
-    alignItems: 'center',
+    justifyContent: 'center',
   },
   contoText: {
     fontSize: 18,
+    fontWeight: '600',
     color: '#1B4D89',
   },
-  centeredView: {
+  
+  // Modal Styles
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalView: {
+  modalContainer: {
     backgroundColor: 'white',
     borderRadius: 20,
     width: width * 0.9,
-    height: '80%',
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    maxHeight: '85%',
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#000000',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#7E80D8',
   },
   modalTitle: {
-    color: '#666',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
   },
   closeButton: {
-    padding: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: 'white',
+  },
+  modalBody: {
+    padding: 20,
   },
   pronounceTitle: {
     textAlign: 'center',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#615CB3',
+    color: '#7E80D8',
     marginBottom: 20,
+    lineHeight: 28,
   },
   pronounceGrid: {
     paddingVertical: 10,
   },
   pronounceItem: {
-    width: (width * 0.9 - 40) / 4.5,
-    height: (width * 0.9 - 40) / 4.5,
-    backgroundColor: '#FFD700',
-    borderRadius: (width * 0.9 - 40) / 8,
+    width: (width * 0.9 - 100) / 4,
+    height: (width * 0.9 - 100) / 4,
+    backgroundColor: '#F7DA30',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 5,
-    borderWidth: 1,
-    borderColor: '#000',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   pronounceImage: {
-    width: '60%',
-    height: '60%',
+    width: '65%',
+    height: '65%',
     resizeMode: 'contain',
   },
-  pronounceSymbol: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  pronounceLetter: {
-    fontSize: 20,
-    color: '#000',
-  },
-  streakModalView: {
+  
+  // Streak Modal Styles
+  streakModalContainer: {
     backgroundColor: 'white',
     borderRadius: 20,
-    width: width * 0.9,
-    padding: 0,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    width: width * 0.85,
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#000000',
   },
   streakModalHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#F7DA30',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
   },
   streakModalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1B4D89',
   },
   streakModalContent: {
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
   },
   streakIcon: {
-    width: 70,
-    height: 70,
-    marginBottom: 15,
+    width: 80,
+    height: 80,
+    marginBottom: 16,
   },
   streakMessage: {
     fontSize: 16,
     textAlign: 'center',
     color: '#333',
-    lineHeight: 22,
-    marginVertical: 15,
-  },
-  streakModalFooter: {
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    padding: 15,
-    alignItems: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
   },
   streakButton: {
     backgroundColor: '#1B4D89',
     paddingHorizontal: 30,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 25,
     minWidth: 120,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   streakButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  alertModal: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: width * 0.8,
-  },
-  alertIcon: {
-    width: 60,
-    height: 60,
-    marginBottom: 15,
-  },
-  alertTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF8C00',
-    marginBottom: 10,
-  },
-  alertMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: 20,
-    lineHeight: 22,
-  },
-  alertButton: {
-    backgroundColor: '#FF8C00',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  alertButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  
+  bottomSpacer: {
+    height: 20,
   },
 });
 

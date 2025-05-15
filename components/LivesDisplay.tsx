@@ -6,10 +6,11 @@ import livesManager, { LivesInfo } from '../utils/livesManager';
 // Props untuk komponen
 interface LivesDisplayProps {
   onLivesUpdated?: (info: LivesInfo) => void;
+  livesInfo?: LivesInfo; // Tambahkan prop livesInfo
 }
 
-const LivesDisplay = ({ onLivesUpdated }: LivesDisplayProps) => {
-  const [livesInfo, setLivesInfo] = useState<LivesInfo>({
+const LivesDisplay = ({ onLivesUpdated, livesInfo: propLivesInfo }: LivesDisplayProps) => {
+  const [internalLivesInfo, setInternalLivesInfo] = useState<LivesInfo>({
     lives: 0,
     maxLives: 5,
     timeUntilNextLife: 0,
@@ -18,33 +19,45 @@ const LivesDisplay = ({ onLivesUpdated }: LivesDisplayProps) => {
   
   const [timeString, setTimeString] = useState('');
   
-  // Inisialisasi saat komponen mount
+  // Gunakan prop livesInfo jika tersedia, jika tidak gunakan state internal
+  const livesInfo = propLivesInfo || internalLivesInfo;
+  
+  // Inisialisasi saat komponen mount (hanya jika tidak ada prop livesInfo)
   useEffect(() => {
     let isMounted = true;
     
-    const initializeLives = async () => {
-      try {
-        const info = await livesManager.initialize();
-        
-        if (isMounted) {
-          setLivesInfo(info);
+    if (!propLivesInfo) {
+      const initializeLives = async () => {
+        try {
+          const info = await livesManager.initialize();
           
-          if (onLivesUpdated) {
-            onLivesUpdated(info);
+          if (isMounted) {
+            setInternalLivesInfo(info);
+            
+            if (onLivesUpdated) {
+              onLivesUpdated(info);
+            }
           }
+        } catch (error) {
+          console.error('Error initializing lives:', error);
         }
-      } catch (error) {
-        console.error('Error initializing lives:', error);
-      }
-    };
-    
-    initializeLives();
+      };
+      
+      initializeLives();
+    }
     
     // Cleanup function
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [propLivesInfo]);
+  
+  // Update internal state jika prop livesInfo berubah
+  useEffect(() => {
+    if (propLivesInfo) {
+      setInternalLivesInfo(propLivesInfo);
+    }
+  }, [propLivesInfo]);
   
   // Update timer untuk nyawa berikutnya
   useEffect(() => {
@@ -53,23 +66,35 @@ const LivesDisplay = ({ onLivesUpdated }: LivesDisplayProps) => {
     if (livesInfo.isInitialized && livesInfo.lives < livesInfo.maxLives) {
       interval = setInterval(async () => {
         try {
-          // Refresh lives info
-          const updatedInfo = await livesManager.getLivesInfo();
-          setLivesInfo(updatedInfo);
-          
-          // Format waktu tersisa
-          if (updatedInfo.timeUntilNextLife > 0) {
-            const minutes = Math.floor(updatedInfo.timeUntilNextLife / 60000);
-            const seconds = Math.ceil((updatedInfo.timeUntilNextLife % 60000) / 1000);
-            setTimeString(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-          } else {
-            setTimeString('');
-            // Nyawa baru tersedia, refresh data
-            const refreshedInfo = await livesManager.initialize();
-            setLivesInfo(refreshedInfo);
+          // Jika tidak menggunakan prop, refresh dari manager
+          if (!propLivesInfo) {
+            // Refresh lives info
+            const updatedInfo = await livesManager.getLivesInfo();
+            setInternalLivesInfo(updatedInfo);
             
-            if (onLivesUpdated) {
-              onLivesUpdated(refreshedInfo);
+            // Format waktu tersisa
+            if (updatedInfo.timeUntilNextLife > 0) {
+              const minutes = Math.floor(updatedInfo.timeUntilNextLife / 60000);
+              const seconds = Math.ceil((updatedInfo.timeUntilNextLife % 60000) / 1000);
+              setTimeString(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+            } else {
+              setTimeString('');
+              // Nyawa baru tersedia, refresh data
+              const refreshedInfo = await livesManager.initialize();
+              setInternalLivesInfo(refreshedInfo);
+              
+              if (onLivesUpdated) {
+                onLivesUpdated(refreshedInfo);
+              }
+            }
+          } else {
+            // Jika menggunakan prop, format timer dari prop
+            if (livesInfo.timeUntilNextLife > 0) {
+              const minutes = Math.floor(livesInfo.timeUntilNextLife / 60000);
+              const seconds = Math.ceil((livesInfo.timeUntilNextLife % 60000) / 1000);
+              setTimeString(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+            } else {
+              setTimeString('');
             }
           }
         } catch (error) {
@@ -86,7 +111,7 @@ const LivesDisplay = ({ onLivesUpdated }: LivesDisplayProps) => {
         clearInterval(interval);
       }
     };
-  }, [livesInfo.isInitialized, livesInfo.lives, livesInfo.maxLives]);
+  }, [livesInfo.isInitialized, livesInfo.lives, livesInfo.maxLives, livesInfo.timeUntilNextLife, propLivesInfo]);
   
   // Render ikon hati berdasarkan nyawa yang tersisa
   const renderHearts = () => {
