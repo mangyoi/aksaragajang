@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -11,13 +11,18 @@ import {
   Modal, 
   Image, 
   TextInput, 
-  ActivityIndicator
+  ActivityIndicator,
+  Share,
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../../utils/firebase/config';
 import { signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { MaterialIcons, Feather, AntDesign } from '@expo/vector-icons';
+import { MaterialIcons, Feather, AntDesign, FontAwesome } from '@expo/vector-icons';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 const { width } = Dimensions.get('window');
 
@@ -49,6 +54,18 @@ const ProfileScreen = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [lastSharedMilestone, setLastSharedMilestone] = useState<number | null>(null);
+  const shareMilestones = [7, 30, 100, 200];
+  
+
+  // State untuk modal share
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [showMilestoneWarning, setShowMilestoneWarning] = useState(false);
+
+  
+  // Referensi untuk ViewShot
+  const shareViewRef = useRef<any>(null);
 
   useEffect(() => {
     loadUserData();
@@ -88,6 +105,12 @@ const ProfileScreen = () => {
         setStreakCount(streakData.streak);
         generateDisplayedStreak(streakData);
       }
+
+      const storedSharedMilestone = await AsyncStorage.getItem('lastSharedMilestone');
+      if (storedSharedMilestone) {
+        setLastSharedMilestone(parseInt(storedSharedMilestone));
+      }
+
     } catch (error) {
       console.error('Error loading user data:', error);
     }
@@ -224,6 +247,86 @@ const ProfileScreen = () => {
     setPasswordSuccess(false);
   };
 
+  // Fungsi untuk menampilkan modal share
+const handleShowShareModal = () => {
+  const isMilestone = shareMilestones.includes(streakCount);
+
+  if (!isMilestone || lastSharedMilestone === streakCount) {
+    setShowMilestoneWarning(true);
+    return;
+  }
+
+  setShareModalVisible(true);
+};
+
+
+
+
+  // Fungsi untuk melakukan share
+  const handleShare = async () => {
+    if (!shareViewRef.current) {
+      Alert.alert('Error', 'Tidak dapat mengambil gambar');
+      return;
+    }
+    
+    try {
+      setIsSharing(true);
+      
+      // Capture view as image
+      const uri = await shareViewRef.current.capture();
+      console.log('Captured URI:', uri);
+      
+      // For Android, we need to save to a temporary file location that other apps can access
+      let shareUri = uri;
+      
+      if (Platform.OS === 'android') {
+        const tempFilePath = `${FileSystem.cacheDirectory}share-image-${Date.now()}.jpg`;
+        await FileSystem.copyAsync({
+          from: uri,
+          to: tempFilePath
+        });
+        shareUri = tempFilePath;
+      }
+      
+      // Share image based on platform
+      if (Platform.OS === 'ios') {
+        // On iOS, we can use React Native's Share API with both message and URL
+        const shareOptions = {
+          title: 'Bagikan Statistik Belajar Saya',
+          message: `Saya telah belajar Bahasa Carakan selama ${streakCount} hari berturut-turut dengan total waktu belajar ${formatTimeSpent(totalTimeSpent)}! #BelajarCarakan`,
+          url: shareUri
+        };
+        
+        await Share.share(shareOptions);
+      } else if (Platform.OS === 'android') {
+        // On Android, if both message and URL are provided, only the URL will be used
+        // So we'll use expo-sharing which handles file sharing better
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(shareUri, {
+            mimeType: 'image/jpeg',
+            dialogTitle: 'Bagikan Statistik Belajar Saya'
+          });
+        } else {
+          // Fallback to React Native's Share API
+          const shareOptions = {
+            title: 'Bagikan Statistik Belajar Saya',
+            url: shareUri
+          };
+          
+          await Share.share(shareOptions);
+        }
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      Alert.alert('Error', 'Gagal membagikan statistik. Silakan coba lagi.');
+    } finally {
+      setIsSharing(false);
+      setShareModalVisible(false);
+      await AsyncStorage.setItem('lastSharedMilestone', streakCount.toString());
+      setLastSharedMilestone(streakCount);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -245,7 +348,12 @@ const ProfileScreen = () => {
         <View style={[styles.card, styles.streakCard]}>
           <View style={styles.streakHeader}>
             <Text style={styles.streakTitle}>Streak</Text>
-            <Text style={styles.streakCountText}>Total: {streakCount} hari</Text>
+            <View style={styles.streakActions}>
+              <Text style={styles.streakCountText}>Total: {streakCount} hari</Text>
+              <TouchableOpacity style={styles.shareButton} onPress={handleShowShareModal}>
+                <FontAwesome name="share-alt" size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.streakDays}>
             {displayedStreak.map((day, index) => (
@@ -291,6 +399,7 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Modal Logout */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -313,6 +422,7 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </Modal>
       
+      {/* Modal Change Password */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -398,6 +508,142 @@ const ProfileScreen = () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Modal Share Streak */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={shareModalVisible}
+        onRequestClose={() => setShareModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShareModalVisible(false)}
+        >
+          <View 
+            style={styles.shareModalContent} 
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.shareModalHeader}>
+              <Text style={styles.shareModalTitle}>Bagikan Statistik Belajar</Text>
+              <TouchableOpacity onPress={() => setShareModalVisible(false)}>
+                <AntDesign name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Konten yang akan diambil screenshot */}
+            <ViewShot 
+              ref={shareViewRef} 
+              options={{ format: 'jpg', quality: 0.9 }}
+              style={styles.shareImageContainer}
+            >
+              <View style={styles.shareCard}>
+                <View style={styles.shareHeader}>
+                  <Image 
+                    source={require('../../assets/images/tampilan/icon/fire-on.png')} 
+                    style={styles.shareLogo} 
+                  />
+                  <Text style={styles.shareAppName}>Carakan</Text>
+                </View>
+                
+                <View style={styles.shareContent}>
+                  <Text style={styles.shareUserName}>{userName}</Text>
+                  
+                  <View style={styles.shareStatsContainer}>
+                    <View style={styles.shareStatColumn}>
+                      <Text style={styles.shareStatTitle}>
+                        STREAK BELAJAR
+                      </Text>
+                      <View style={styles.shareStreakCount}>
+                        <Text style={styles.shareCountNumber}>{streakCount}</Text>
+                        <Text style={styles.shareDaysText}>HARI</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.shareStatDivider} />
+                    
+                    <View style={styles.shareStatColumn}>
+                      <Text style={styles.shareStatTitle}>
+                        WAKTU BELAJAR
+                      </Text>
+                      <View style={styles.shareTimeContainer}>
+                        <Image 
+                          source={require('../../assets/images/tampilan/icon/fire-on.png')}
+                          style={styles.shareTimeIcon}
+                        />
+                        <Text style={styles.shareTimeText}>{formatTimeSpent(totalTimeSpent)}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  
+                  {/* Bagian streak days */}
+                  <View style={styles.shareStreakContainer}>
+                    <Text style={styles.shareStreakSubtitle}>Riwayat Streak</Text>
+                    <View style={styles.shareStreakDays}>
+                      {displayedStreak.map((day, index) => (
+                        <View key={index} style={styles.shareDayContainer}>
+                          <Text style={styles.shareDayNumber}>{day.dayNumber}</Text>
+                          <Image 
+                            style={styles.shareStreakIcon} 
+                            source={day.isActive 
+                              ? require('../../assets/images/tampilan/icon/fire-on.png')
+                              : require('../../assets/images/tampilan/icon/fire-off.png')
+                            } 
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.shareMessage}>
+                    Ayo belajar Bahasa Carakan bersama!
+                  </Text>
+                </View>
+              </View>
+            </ViewShot>
+            
+            <TouchableOpacity 
+              style={styles.shareButton2}
+              onPress={handleShare}
+              disabled={isSharing}
+            >
+              {isSharing ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <FontAwesome name="share-alt" size={20} color="#FFF" style={styles.shareButtonIcon} />
+                  <Text style={styles.shareButtonText}>Bagikan Statistik Belajar</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showMilestoneWarning}
+        onRequestClose={() => setShowMilestoneWarning(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+              Belum Bisa Dibagikan
+            </Text>
+            <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+              Fitur bagikan akan aktif saat kamu mencapai streak 7, 30, 100, atau 200 hari.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowMilestoneWarning(false)}
+              style={[styles.shareButton2, { backgroundColor: '#7E80D8' }]}
+            >
+              <Text style={styles.shareButtonText}>Mengerti</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 };
@@ -474,6 +720,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  streakActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   streakTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -483,6 +733,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FF8C00',
+    marginRight: 10,
+  },
+  shareButton: {
+    backgroundColor: '#FFF',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000',
   },
   streakDays: {
     flexDirection: 'row',
@@ -658,6 +919,197 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4CAF50',
     marginTop: 15,
+  },
+  
+  // Style untuk modal Share Streak
+  shareModalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 25,
+    width: width * 0.9,
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+  },
+  shareModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 10,
+    width: '100%',
+  },
+  shareModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  shareImageContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareCard: {
+    width: width * 0.8,
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  shareHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#7E80D8',
+    padding: 15,
+  },
+  shareLogo: {
+    width: 36,
+    height: 36,
+    resizeMode: 'contain',
+  },
+  shareAppName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginLeft: 10,
+  },
+  shareContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  shareUserName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 10,
+  },
+  shareStreakTitle: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  shareStreakCount: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  shareCountNumber: {
+    fontSize: 60,
+    fontWeight: 'bold',
+    color: '#FF8C00',
+  },
+  shareDaysText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  shareStreakDays: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 20,
+  },
+  shareDayContainer: {
+    alignItems: 'center',
+  },
+  shareDayNumber: {
+    fontSize: 12,
+    color: '#000',
+    marginBottom: 5,
+  },
+  shareStreakIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+  shareMessage: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 10,
+  },
+  shareButton2: {
+    backgroundColor: '#7E80D8',
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
+    width: '80%',
+  },
+  shareButtonIcon: {
+    marginRight: 10,
+  },
+  shareButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  
+  // Styles tambahan untuk share modal dengan waktu bermain
+  shareStatsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginVertical: 15,
+    paddingHorizontal: 5,
+  },
+  shareStatColumn: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 5,
+  },
+  shareStatDivider: {
+    width: 1,
+    backgroundColor: '#DDD',
+    marginHorizontal: 5,
+  },
+  shareStatTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  shareTimeContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareTimeIcon: {
+    width: 28,
+    height: 28,
+    resizeMode: 'contain',
+    marginBottom: 5,
+  },
+  shareTimeText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#4D5BD1',
+    textAlign: 'center',
+  },
+  shareStreakContainer: {
+    width: '100%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 10,
+  },
+  shareStreakSubtitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
   },
 });
 

@@ -30,7 +30,6 @@ const MainMenu = () => {
   const [isStreakActive, setIsStreakActive] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);  
   
-  // Add focus effect to check material time when returning to this screen
   useFocusEffect(
     React.useCallback(() => {
       checkMaterialTime();
@@ -84,7 +83,6 @@ const MainMenu = () => {
             materialTimeSpent: timeSpentSeconds
           };
           
-          // Check if streak should be activated (60 seconds = 1 minute)
           if (timeSpentSeconds >= 60) {
             updatedData.isStreakActive = true;
             setIsStreakActive(true);
@@ -93,10 +91,8 @@ const MainMenu = () => {
           await AsyncStorage.setItem('userStreakData', JSON.stringify(updatedData));
         }
         
-        // Clear the start time
         await AsyncStorage.removeItem('materiStartTime');
         
-        // Refresh streak status
         await checkAndUpdateStreak();
       }
     } catch (error) {

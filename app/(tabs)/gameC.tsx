@@ -1,5 +1,4 @@
-//gameC.tsx with Lives System and Life Deduction on Wrong Answers
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,26 +8,28 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
-  Modal
-} from 'react-native';
+  Modal,
+} from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS
-} from 'react-native-reanimated';
+  runOnJS,
+  cancelAnimation,
+} from "react-native-reanimated";
 import {
   Gesture,
   GestureDetector,
-  GestureHandlerRootView
-} from 'react-native-gesture-handler';
-import { useRouter } from 'expo-router';
-import LivesDisplay from '../../components/LivesDisplay';
-import NoLivesModal from '../../components/NoLivesModal';
-import livesManager, { LivesInfo } from '../../utils/livesManager';
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import { useRouter } from "expo-router";
+import LivesDisplay from "../../components/LivesDisplay";
+import NoLivesModal from "../../components/NoLivesModal";
+import livesManager, { LivesInfo } from "../../utils/livesManager";
+import { InteractionManager } from "react-native";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface DraggableItem {
   id: number;
@@ -56,6 +57,29 @@ interface Question {
   targets: DropTarget[];
 }
 
+const DropTargetBox = React.forwardRef(
+  ({ target, letter }: { target: DropTarget; letter?: string }, ref) => (
+    <View
+      ref={ref as React.RefObject<View>}
+      style={[
+        styles.dropTarget,
+        target.occupied &&
+          (target.isCorrect ? styles.correctTarget : styles.incorrectTarget),
+      ]}
+    >
+      {target.occupied && target.itemId && target.isCorrect ? (
+        <View style={styles.targetContent}>
+          <Text style={styles.targetLetterText}>{letter}</Text>
+        </View>
+      ) : (
+        <Text style={styles.dropHereText}>Letakkan di sini</Text>
+      )}
+    </View>
+  )
+);
+
+DropTargetBox.displayName = "DropTargetBox";
+
 const DragDropGameScreen = () => {
   const [activeItemId, setActiveItemId] = useState<number | null>(null);
   const [allCorrect, setAllCorrect] = useState(false);
@@ -63,22 +87,24 @@ const DragDropGameScreen = () => {
   const [completedQuestions, setCompletedQuestions] = useState<number[]>([]);
   const [showNextButton, setShowNextButton] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
+  const [isMeasuring, setIsMeasuring] = useState(false);
   const router = useRouter();
-  
-  // Lives system state
+
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const [livesInfo, setLivesInfo] = useState<LivesInfo>({
     lives: 0,
     maxLives: 5,
     timeUntilNextLife: 0,
-    isInitialized: false
+    isInitialized: false,
   });
   const [showNoLivesModal, setShowNoLivesModal] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  
+
   const [feedbackModal, setFeedbackModal] = useState({
     visible: false,
     isCorrect: false,
-    message: ""
+    message: "",
   });
 
   const questions: Question[] = [
@@ -86,157 +112,290 @@ const DragDropGameScreen = () => {
       id: 1,
       text: "acaca",
       items: [
-        { id: 1, letter: 'ꦲ' },
-        { id: 2, letter: 'ꦕ' },
-        { id: 3, letter: 'ꦕ' }
+        { id: 101, letter: "ꦲ" },
+        { id: 102, letter: "ꦕ" },
+        { id: 103, letter: "ꦕ" },
       ],
       targets: [
-        { id: 1, occupied: false, itemId: null, correctLetter: 'ꦲ', layout: null },
-        { id: 2, occupied: false, itemId: null, correctLetter: 'ꦕ', layout: null },
-        { id: 3, occupied: false, itemId: null, correctLetter: 'ꦕ', layout: null }
-      ]
+        {
+          id: 201,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦲ",
+          layout: null,
+        },
+        {
+          id: 202,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦕ",
+          layout: null,
+        },
+        {
+          id: 203,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦕ",
+          layout: null,
+        },
+      ],
     },
     {
       id: 2,
       text: "Sapana",
       items: [
-        { id: 1, letter: 'ꦥ' },
-        { id: 2, letter: 'ꦱ' },
-        { id: 3, letter: 'ꦤ' },
+        { id: 104, letter: "ꦥ" },
+        { id: 105, letter: "ꦱ" },
+        { id: 106, letter: "ꦤ" },
       ],
       targets: [
-        { id: 1, occupied: false, itemId: null, correctLetter: 'ꦱ', layout: null },
-        { id: 2, occupied: false, itemId: null, correctLetter: 'ꦥ', layout: null },
-        { id: 3, occupied: false, itemId: null, correctLetter: 'ꦤ', layout: null },
-
-      ]
+        {
+          id: 204,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦱ",
+          layout: null,
+        },
+        {
+          id: 205,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦥ",
+          layout: null,
+        },
+        {
+          id: 206,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦤ",
+          layout: null,
+        },
+      ],
     },
     {
       id: 3,
       text: "Pamacana",
       items: [
-        { id: 1, letter: 'ꦕ' },
-        { id: 2, letter: 'ꦩ' },
-        { id: 3, letter: 'ꦤ' },
-        { id: 4, letter: 'ꦥ' },
+        { id: 107, letter: "ꦕ" },
+        { id: 108, letter: "ꦩ" },
+        { id: 109, letter: "ꦤ" },
+        { id: 110, letter: "ꦥ" },
       ],
       targets: [
-        { id: 1, occupied: false, itemId: null, correctLetter: 'ꦥ', layout: null },
-        { id: 2, occupied: false, itemId: null, correctLetter: 'ꦩ', layout: null },
-        { id: 3, occupied: false, itemId: null, correctLetter: 'ꦕ', layout: null },
-        { id: 4, occupied: false, itemId: null, correctLetter: 'ꦤ', layout: null },
-      ]
+        {
+          id: 207,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦥ",
+          layout: null,
+        },
+        {
+          id: 208,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦩ",
+          layout: null,
+        },
+        {
+          id: 209,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦕ",
+          layout: null,
+        },
+        {
+          id: 210,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦤ",
+          layout: null,
+        },
+      ],
     },
     {
       id: 4,
       text: "Kacamata",
       items: [
-        { id: 1, letter: 'ꦕ' },
-        { id: 2, letter: 'ꦩ' },
-        { id: 3, letter: 'ꦩ' },
-        { id: 4, letter: 'ꦏ' },
+        { id: 111, letter: "ꦕ" },
+        { id: 112, letter: "ꦩ" },
+        { id: 113, letter: "ꦠ" },
+        { id: 114, letter: "ꦏ" },
       ],
       targets: [
-        { id: 1, occupied: false, itemId: null, correctLetter: 'ꦏ', layout: null },
-        { id: 2, occupied: false, itemId: null, correctLetter: 'ꦕ', layout: null },
-        { id: 3, occupied: false, itemId: null, correctLetter: 'ꦩ', layout: null },
-        { id: 4, occupied: false, itemId: null, correctLetter: 'ꦠ', layout: null },
-      ]
-    }
+        {
+          id: 211,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦏ",
+          layout: null,
+        },
+        {
+          id: 212,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦕ",
+          layout: null,
+        },
+        {
+          id: 213,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦩ",
+          layout: null,
+        },
+        {
+          id: 214,
+          occupied: false,
+          itemId: null,
+          correctLetter: "ꦠ",
+          layout: null,
+        },
+      ],
+    },
   ];
 
-  const [currentQuestion, setCurrentQuestion] = useState<Question>(questions[0]);
-  const [draggableItems, setDraggableItems] = useState<DraggableItem[]>(questions[0].items);
-  const [dropTargets, setDropTargets] = useState<DropTarget[]>(questions[0].targets);
+  const [currentQuestion, setCurrentQuestion] = useState<Question>(
+    questions[0]
+  );
+  const [draggableItems, setDraggableItems] = useState<DraggableItem[]>(
+    questions[0].items
+  );
+  const [dropTargets, setDropTargets] = useState<DropTarget[]>(
+    questions[0].targets
+  );
 
   const containerRef = useRef(null);
   const targetRefs = useRef({});
   const hasMeasuredRef = useRef(false);
 
-  // Check lives status when component mounts
+  const animatedValuesRef = useRef([]);
+
   useEffect(() => {
     const checkLives = async () => {
       const info = await livesManager.initialize();
       setLivesInfo(info);
     };
-    
+
     checkLives();
   }, []);
 
-  // Start game tanpa mengurangi nyawa
   const startGame = async () => {
-    // Periksa apakah masih ada nyawa tersisa
     const info = await livesManager.getLivesInfo();
     setLivesInfo(info);
-    
+
     if (info.lives <= 0) {
       setShowNoLivesModal(true);
       return;
     }
-    
+
     setGameStarted(true);
     setCurrentQuestionIndex(0);
     initializeQuestion(0);
   };
-  
-  // Handle lives updates
+
   const handleLivesUpdated = (info: LivesInfo) => {
     setLivesInfo(info);
   };
-  
-  // Close no lives modal and return to main menu
+
   const handleNoLivesGoHome = () => {
     setShowNoLivesModal(false);
-    router.push('/mainmenu');
+    router.push("/mainmenu");
   };
 
-  useEffect(() => {
-    questions.forEach(question => {
-      question.targets.forEach(target => {
-        if (!targetRefs.current[target.id]) {
-          targetRefs.current[target.id] = React.createRef();
+  const cleanupAnimatedValues = () => {
+    animatedValuesRef.current.forEach((value) => {
+      try {
+        if (value && typeof value.value !== "undefined") {
+          cancelAnimation(value);
         }
-      });
+      } catch (error) {
+        console.log("Error cleaning up animation:", error);
+      }
     });
-  }, []);
+
+    animatedValuesRef.current = [];
+  };
 
   const initializeQuestion = (index: number) => {
-    const question = questions[index];
-    setCurrentQuestion(question);
-    setDraggableItems(question.items);
-    setDropTargets(JSON.parse(JSON.stringify(question.targets)));
+    setIsTransitioning(false);
+
+    const baseQuestion = questions[index];
+
+    const clonedTargets = baseQuestion.targets.map((target) => ({
+      id: target.id,
+      correctLetter: target.correctLetter,
+      occupied: false,
+      itemId: null,
+      isCorrect: false,
+      layout: null,
+    }));
+
+    const newTargetRefs = {};
+    clonedTargets.forEach((target) => {
+      newTargetRefs[target.id] = React.createRef();
+    });
+    targetRefs.current = newTargetRefs;
+
+    setCurrentQuestion({
+      ...baseQuestion,
+      targets: clonedTargets,
+      items: [...baseQuestion.items],
+    });
+    setDraggableItems([...baseQuestion.items]);
+    setDropTargets(clonedTargets);
     setAllCorrect(false);
     setShowNextButton(false);
     hasMeasuredRef.current = false;
+
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => {
+        hasMeasuredRef.current = false; // just to be sure
+        requestAnimationFrame(() => {
+          measureDropTargets();
+        });
+      }, 300);
+    });
   };
 
   useEffect(() => {
-    if (gameStarted) {
-      initializeQuestion(currentQuestionIndex);
-    }
-  }, [currentQuestionIndex, gameStarted]);
+  if (dropTargets.some(t => t.layout === null)) {
+    const timeout = setTimeout(() => {
+      measureDropTargets(true); 
+    }, 300);
+    return () => clearTimeout(timeout);
+  }
+}, [dropTargets]);
 
   useEffect(() => {
-    if (hasMeasuredRef.current) return;
-    
-    const timer = setTimeout(() => {
-      if (!containerRef.current || hasMeasuredRef.current) return;
-      
-      const newTargets = [...dropTargets];
-      let pendingMeasurements = dropTargets.length;
-      let hasUpdates = false;
-      
-      dropTargets.forEach((target, index) => {
-        const ref = targetRefs.current[target.id];
-        if (!ref || !ref.current) {
-          pendingMeasurements--;
-          if (pendingMeasurements === 0 && hasUpdates) {
-            hasMeasuredRef.current = true;
-            setDropTargets(newTargets);
-          }
-          return;
-        }
-        
+    if (gameStarted && !isTransitioning) {
+      initializeQuestion(currentQuestionIndex);
+    }
+  }, [currentQuestionIndex, gameStarted, isTransitioning]);
+
+  const measureDropTargets = (force = false) => {
+    if (
+      (hasMeasuredRef.current && !force) ||
+      !containerRef.current ||
+      isMeasuring
+    )
+      return;
+
+    setIsMeasuring(true);
+
+    const newTargets = [...dropTargets];
+    let pendingMeasurements = dropTargets.length;
+    let hasUpdates = false;
+
+    dropTargets.forEach((target, index) => {
+      const ref = targetRefs.current[target.id];
+      if (!ref || !ref.current) {
+        pendingMeasurements--;
+        if (pendingMeasurements === 0)
+          finalizeMeasurements(newTargets, hasUpdates);
+        return;
+      }
+
+      try {
         ref.current.measure((x, y, width, height, pageX, pageY) => {
           if (pageX !== null && pageY !== null) {
             newTargets[index] = {
@@ -250,18 +409,25 @@ const DragDropGameScreen = () => {
             };
             hasUpdates = true;
           }
-          
           pendingMeasurements--;
-          if (pendingMeasurements === 0 && hasUpdates) {
-            hasMeasuredRef.current = true;
-            setDropTargets(newTargets);
-          }
+          if (pendingMeasurements === 0)
+            finalizeMeasurements(newTargets, hasUpdates);
         });
-      });
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [dropTargets]);
+      } catch (e) {
+        pendingMeasurements--;
+        if (pendingMeasurements === 0)
+          finalizeMeasurements(newTargets, hasUpdates);
+      }
+    });
+  };
+
+  const finalizeMeasurements = (targets, shouldUpdate) => {
+  if (shouldUpdate) {
+    setDropTargets(targets);
+    hasMeasuredRef.current = true;
+  }
+  setIsMeasuring(false);
+};
 
   useEffect(() => {
     if (feedbackModal.visible) {
@@ -274,82 +440,84 @@ const DragDropGameScreen = () => {
   }, [feedbackModal.visible, allCorrect]);
 
   const checkAllCorrect = (updatedTargets) => {
-    const isAllCorrect = updatedTargets.every(target => target.isCorrect === true);
-    
+    const isAllCorrect = updatedTargets.every(
+      (target) => target.isCorrect === true
+    );
+
     if (isAllCorrect && !allCorrect) {
       setAllCorrect(true);
-      
+
       if (!completedQuestions.includes(currentQuestion.id)) {
         setCompletedQuestions([...completedQuestions, currentQuestion.id]);
       }
-      
+
       if (currentQuestionIndex < questions.length - 1) {
         setShowNextButton(true);
       } else {
         setGameCompleted(true);
-        
-        // Reward the player with an extra life if they complete the game
+
         const rewardPlayer = async () => {
           await livesManager.addLife();
           const updatedInfo = await livesManager.getLivesInfo();
           setLivesInfo(updatedInfo);
         };
-        
+
         rewardPlayer();
       }
-      
+
       setTimeout(() => {
         setFeedbackModal({
           visible: true,
           isCorrect: true,
-          message: currentQuestionIndex < questions.length - 1 ? 
-                   "Benar! Lanjutkan ke soal berikutnya." : 
-                   "Semua Benar! Anda telah menyelesaikan semua soal dan mendapatkan nyawa tambahan!"
+          message:
+            currentQuestionIndex < questions.length - 1
+              ? "Benar! Lanjutkan ke soal berikutnya."
+              : "Semua Benar! Anda telah menyelesaikan semua soal dan mendapatkan nyawa tambahan!",
         });
       }, 300);
     }
   };
 
-  // Modifikasi handleSuccessfulDrop untuk mengurangi nyawa saat salah
-  const handleSuccessfulDrop = async (itemId, targetId, setVisible, resetPosition) => {
-    const item = draggableItems.find(item => item.id === itemId);
-    const target = dropTargets.find(target => target.id === targetId);
-    
-    if (!target || !target.layout || !item) {
-      resetPosition();
+  const handleSuccessfulDrop = async (
+    itemId,
+    targetId,
+    setVisible,
+    resetPosition
+  ) => {
+    const item = draggableItems.find((item) => item.id === itemId);
+    const target = dropTargets.find((target) => target.id === targetId);
+
+    if (!item || !target || !target.layout) {
+      runOnJS(resetPosition)();
       return;
     }
-    
+
     const isCorrect = item.letter === target.correctLetter;
-    
+
     if (isCorrect) {
-      // Jawaban benar - item cocok dengan target
-      const updatedTargets = dropTargets.map(t => 
-        t.id === targetId 
-          ? { ...t, occupied: true, itemId: itemId, isCorrect: true } 
+      const updatedTargets = dropTargets.map((t) =>
+        t.id === targetId
+          ? { ...t, occupied: true, itemId: itemId, isCorrect: true }
           : { ...t }
       );
-      
+
       setDropTargets(updatedTargets);
       setVisible(false);
       checkAllCorrect(updatedTargets);
-      
+
       setFeedbackModal({
         visible: true,
         isCorrect: true,
-        message: ""
+        message: "",
       });
     } else {
-      // Jawaban salah - item tidak cocok dengan target
-      resetPosition();
-      
-      // Kurangi nyawa untuk jawaban salah
+      runOnJS(resetPosition)();
+
       const reduceLife = async () => {
         const stillHasLives = await livesManager.useLife();
         const updatedInfo = await livesManager.getLivesInfo();
         setLivesInfo(updatedInfo);
-        
-        // Jika nyawa habis setelah pengurangan, tutup game
+
         if (!stillHasLives || updatedInfo.lives <= 0) {
           setTimeout(() => {
             setFeedbackModal({ visible: false });
@@ -357,21 +525,28 @@ const DragDropGameScreen = () => {
           }, 1500);
         }
       };
-      
+
       await reduceLife();
-      
+
       setFeedbackModal({
         visible: true,
         isCorrect: false,
-        message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${livesInfo.lives}`
+        message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${livesInfo.lives}`,
       });
     }
   };
 
   const goToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
+    setIsTransitioning(true);
+    cleanupAnimatedValues();
+
+    setTimeout(() => {
+      const nextIndex = currentQuestionIndex + 1;
+      if (nextIndex < questions.length) {
+        setCurrentQuestionIndex(nextIndex);
+      }
+      setIsTransitioning(false);
+    }, 200);
   };
 
   const DraggableItemComponent = ({ item }) => {
@@ -379,59 +554,82 @@ const DragDropGameScreen = () => {
     const scale = useSharedValue(1);
     const isDragging = useSharedValue(false);
     const isVisible = useSharedValue(1);
-    
-    const occupiedTarget = dropTargets.find(t => t.itemId === item.id && t.isCorrect === true);
+
+    const occupiedTarget = dropTargets.find(
+      (t) => t.itemId === item.id && t.isCorrect === true
+    );
     const isLocked = !!occupiedTarget;
-    
+
     useEffect(() => {
       isVisible.value = isLocked ? 0 : 1;
     }, [isLocked]);
-    
+
     const setItemVisible = (visible) => {
       isVisible.value = visible ? 1 : 0;
     };
-    
+
     const resetItemPosition = () => {
-      offset.value = withSpring({ x: 0, y: 0 });
+      offset.value = withSpring(
+        { x: 0, y: 0 },
+        {
+          damping: 15,
+          stiffness: 120,
+          overshootClamping: true,
+          restDisplacementThreshold: 0.01,
+          restSpeedThreshold: 0.01,
+        }
+      );
+      scale.value = withTiming(1, { duration: 150 });
     };
-    
+
     const panGesture = Gesture.Pan()
       .enabled(!isLocked)
       .onStart(() => {
+        if (isTransitioning) return;
         isDragging.value = true;
-        scale.value = withTiming(1.2, { duration: 100 });
+        scale.value = withTiming(1.1, { duration: 100 });
         runOnJS(setActiveItemId)(item.id);
       })
       .onUpdate((event) => {
+        if (
+          typeof event.translationX !== "number" ||
+          typeof event.translationY !== "number"
+        )
+          return;
         offset.value = {
           x: event.translationX,
-          y: event.translationY
+          y: event.translationY,
         };
       })
       .onEnd((event) => {
-        const itemPosition = {
-          x: event.absoluteX,
-          y: event.absoluteY
-        };
-        
-        if (!dropTargets.some(target => target.layout)) {
+        if (
+          !event ||
+          typeof event.absoluteX !== "number" ||
+          typeof event.absoluteY !== "number"
+        ) {
           runOnJS(resetItemPosition)();
           return;
         }
 
+        const itemPosition = {
+          x: event.absoluteX,
+          y: event.absoluteY,
+        };
+
         let droppedOnTarget = false;
         let targetId = null;
+        const buffer = 20;
 
         for (const target of dropTargets) {
           if (target.occupied || !target.layout) continue;
 
           const { x, y, width, height } = target.layout;
-          
+
           if (
-            itemPosition.x >= x &&
-            itemPosition.x <= x + width &&
-            itemPosition.y >= y &&
-            itemPosition.y <= y + height
+            itemPosition.x >= x - buffer &&
+            itemPosition.x <= x + width + buffer &&
+            itemPosition.y >= y - buffer &&
+            itemPosition.y <= y + height + buffer
           ) {
             droppedOnTarget = true;
             targetId = target.id;
@@ -439,13 +637,19 @@ const DragDropGameScreen = () => {
           }
         }
 
-        if (droppedOnTarget && targetId) {
-          runOnJS(handleSuccessfulDrop)(item.id, targetId, setItemVisible, resetItemPosition);
+        if (droppedOnTarget && targetId != null) {
+          runOnJS(handleSuccessfulDrop)(
+            item.id,
+            targetId,
+            setItemVisible,
+            resetItemPosition
+          );
         } else {
           runOnJS(resetItemPosition)();
         }
-        
+
         scale.value = withTiming(1, { duration: 100 });
+        isDragging.value = false;
         runOnJS(setActiveItemId)(null);
       });
 
@@ -454,14 +658,16 @@ const DragDropGameScreen = () => {
         transform: [
           { translateX: offset.value.x },
           { translateY: offset.value.y },
-          { scale: scale.value }
+          { scale: scale.value },
         ],
         zIndex: isDragging.value ? 1000 : 1,
         opacity: isVisible.value,
-        borderColor: isDragging.value ? '#2196F3' : '#1E3A8A'
+        borderColor: isDragging.value ? "#2196F3" : "#1E3A8A",
       };
     });
-    
+
+    if (isLocked) return null;
+
     return (
       <GestureDetector gesture={panGesture}>
         <View>
@@ -473,7 +679,6 @@ const DragDropGameScreen = () => {
     );
   };
 
-  // Modifikasi FeedbackModal untuk menampilkan info nyawa yang berkurang
   const FeedbackModal = () => (
     <Modal
       transparent={true}
@@ -482,32 +687,44 @@ const DragDropGameScreen = () => {
       onRequestClose={() => {}}
     >
       <View style={styles.modalOverlay}>
-        <View style={[
-          styles.modalContainer,
-          feedbackModal.isCorrect ? styles.correctModalContainer : styles.incorrectModalContainer
-        ]}>
+        <View
+          style={[
+            styles.modalContainer,
+            feedbackModal.isCorrect
+              ? styles.correctModalContainer
+              : styles.incorrectModalContainer,
+          ]}
+        >
           <Image
             source={
               feedbackModal.isCorrect
-                ? require('../../assets/images/tampilan/correctpopup.png')
-                : require('../../assets/images/tampilan/wrongpopup.png')
+                ? require("../../assets/images/tampilan/correctpopup.png")
+                : require("../../assets/images/tampilan/wrongpopup.png")
             }
             style={styles.feedbackImage}
             resizeMode="contain"
           />
-          
-          <Text style={[
-            styles.modalMessageText,
-            feedbackModal.isCorrect ? styles.correctMessageText : styles.incorrectMessageText
-          ]}>
-            {feedbackModal.isCorrect ? 'Benar!' : 'Salah!'}
+
+          <Text
+            style={[
+              styles.modalMessageText,
+              feedbackModal.isCorrect
+                ? styles.correctMessageText
+                : styles.incorrectMessageText,
+            ]}
+          >
+            {feedbackModal.isCorrect ? "Benar!" : "Salah!"}
           </Text>
-          
+
           {feedbackModal.message && (
-            <Text style={[
-              styles.modalDetailText,
-              feedbackModal.isCorrect ? styles.correctMessageText : styles.incorrectMessageText
-            ]}>
+            <Text
+              style={[
+                styles.modalDetailText,
+                feedbackModal.isCorrect
+                  ? styles.correctMessageText
+                  : styles.incorrectMessageText,
+              ]}
+            >
               {feedbackModal.message}
             </Text>
           )}
@@ -516,27 +733,27 @@ const DragDropGameScreen = () => {
     </Modal>
   );
 
-  // Render pre-game screen
   const renderPreGameScreen = () => {
     return (
       <View style={styles.preGameContainer}>
         <Text style={styles.preGameTitle}>Carakan - Nan Maenan</Text>
         <Text style={styles.preGameSubtitle}>Permainan Tempel Aksara</Text>
-        
+
         <Text style={styles.preGameDescription}>
-          Tarik aksara dan letakkan di posisi yang tepat. Nyawa akan berkurang jika aksara ditempatkan pada posisi yang salah.
+          Tarik aksara dan letakkan di posisi yang tepat. Nyawa akan berkurang
+          jika aksara ditempatkan pada posisi yang salah.
         </Text>
-        
-        <Image 
-          source={require('../../assets/images/tampilan/AstronoutGameA.png')} 
-          style={styles.preGameImage} 
+
+        <Image
+          source={require("../../assets/images/tampilan/AstronoutGameA.png")}
+          style={styles.preGameImage}
           resizeMode="contain"
         />
-        
+
         <TouchableOpacity
           style={[
             styles.startGameButton,
-            livesInfo.lives <= 0 && styles.disabledButton
+            livesInfo.lives <= 0 && styles.disabledButton,
           ]}
           onPress={startGame}
           disabled={livesInfo.lives <= 0}
@@ -548,17 +765,14 @@ const DragDropGameScreen = () => {
 
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => router.push('/mainmenu')}
+          onPress={() => router.push("/mainmenu")}
         >
-          <Text style={styles.homeButtonText}>
-            Kembali ke Menu Utama
-          </Text>
+          <Text style={styles.homeButtonText}>Kembali ke Menu Utama</Text>
         </TouchableOpacity>
       </View>
     );
   };
 
-  // Render game completed screen
   const renderGameCompletedScreen = () => {
     return (
       <View style={styles.completedContainer}>
@@ -566,37 +780,36 @@ const DragDropGameScreen = () => {
         <Text style={styles.completedSubtitle}>
           Anda telah menyelesaikan semua soal dengan sempurna!
         </Text>
-        
-        <Image 
-          source={require('../../assets/images/tampilan/correctpopup.png')} 
-          style={styles.completedImage} 
+
+        <Image
+          source={require("../../assets/images/tampilan/correctpopup.png")}
+          style={styles.completedImage}
           resizeMode="contain"
         />
-        
+
         <Text style={styles.bonusText}>
           Anda mendapatkan bonus nyawa tambahan!
         </Text>
-        
-        <TouchableOpacity
-          style={styles.playAgainButton}
-          onPress={startGame}
-        >
-          <Text style={styles.playAgainButtonText}>
-            Main Lagi
-          </Text>
+
+        <TouchableOpacity style={styles.playAgainButton} onPress={startGame}>
+          <Text style={styles.playAgainButtonText}>Main Lagi</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => router.push('/mainmenu')}
+          onPress={() => router.push("/mainmenu")}
         >
-          <Text style={styles.homeButtonText}>
-            Kembali ke Menu Utama
-          </Text>
+          <Text style={styles.homeButtonText}>Kembali ke Menu Utama</Text>
         </TouchableOpacity>
       </View>
     );
   };
+
+  useEffect(() => {
+    return () => {
+      cleanupAnimatedValues();
+    };
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -610,10 +823,8 @@ const DragDropGameScreen = () => {
           )}
         </View>
 
-        {/* Lives Display */}
         <LivesDisplay onLivesUpdated={handleLivesUpdated} />
 
-        {/* No Lives Modal */}
         <NoLivesModal
           visible={showNoLivesModal}
           onClose={() => setShowNoLivesModal(false)}
@@ -622,71 +833,77 @@ const DragDropGameScreen = () => {
         />
 
         {!gameStarted ? (
-          // Show pre-game screen
           renderPreGameScreen()
         ) : gameCompleted ? (
-          // Show game completed screen
           renderGameCompletedScreen()
         ) : (
-          // Main game interface
           <>
             <Text style={styles.gameTitle}>Nan Maenan</Text>
-            
-            <Text style={styles.instructionText}>kagabay okara e baba reya</Text>
+
+            <Text style={styles.instructionText}>
+              kagabay okara e baba reya
+            </Text>
 
             <View style={styles.questionContainer}>
               <Text style={styles.questionText}>{currentQuestion.text}</Text>
             </View>
 
-            <Text style={styles.dropTargetLabel}>Tarik aksara dan letakkan di kotak di bawah ini:</Text>
+            <Text style={styles.dropTargetLabel}>
+              Tarik aksara dan letakkan di kotak di bawah ini:
+            </Text>
 
             <View style={styles.dropTargetRow}>
-              {dropTargets.map(target => (
-                <View 
-                  key={`target-${target.id}`}
-                  ref={targetRefs.current[target.id]}
-                  style={[
-                    styles.dropTarget,
-                    target.occupied && (target.isCorrect ? styles.correctTarget : styles.incorrectTarget)
-                  ]}
-                >
-                  {target.occupied && target.itemId && target.isCorrect ? (
-                    <View style={styles.targetContent}>
-                      <Text style={styles.targetLetterText}>
-                        {draggableItems.find(item => item.id === target.itemId)?.letter}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.dropHereText}>Letakkan di sini</Text>
-                  )}
-                </View>
-              ))}
+              {dropTargets.map((target) => {
+                const letter = draggableItems.find(
+                  (item) => item.id === target.itemId
+                )?.letter;
+                return (
+                  <DropTargetBox
+                    key={`target-${target.id}`}
+                    ref={targetRefs.current[target.id]}
+                    target={target}
+                    letter={letter}
+                  />
+                );
+              })}
             </View>
 
             <View style={styles.draggableContainer}>
-              <Text style={styles.draggableTitle}>Aksara yang bisa ditarik:</Text>
+              <Text style={styles.draggableTitle}>
+                Aksara yang bisa ditarik:
+              </Text>
               <View style={styles.draggableItemsRow}>
-                {draggableItems.map(item => (
-                  <DraggableItemComponent key={`item-${item.id}`} item={item} />
-                ))}
+                {!isTransitioning &&
+                  draggableItems.map((item) => (
+                    <DraggableItemComponent
+                      key={`item-${item.id}`}
+                      item={item}
+                    />
+                  ))}
               </View>
             </View>
 
             {showNextButton && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.nextButton}
                 onPress={goToNextQuestion}
+                disabled={isTransitioning}
               >
-                <Text style={styles.nextButtonText}>Lanjut ke Soal Berikutnya</Text>
+                <Text style={styles.nextButtonText}>
+                  Lanjut ke Soal Berikutnya
+                </Text>
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/mainmenu')}>
-              <Text style={styles.homeButtonText}>utama</Text>
+            <TouchableOpacity
+              style={styles.homeButton}
+              onPress={() => router.push("/mainmenu")}
+            >
+              <Text style={styles.homeButtonText}>Kembali ke Menu</Text>
             </TouchableOpacity>
           </>
         )}
-        
+
         <FeedbackModal />
       </SafeAreaView>
     </GestureHandlerRootView>
@@ -699,196 +916,194 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
-    alignItems: 'center'
+    backgroundColor: "white",
+    alignItems: "center",
   },
   header: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFD700',
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FFD700",
     paddingHorizontal: 15,
     paddingVertical: 12,
-    marginBottom: 20
+    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1B4D89'
+    fontWeight: "bold",
+    color: "#1B4D89",
   },
   questionCounter: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1B4D89'
+    fontWeight: "bold",
+    color: "#1B4D89",
   },
   gameTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B4D89',
-    marginBottom: 10
+    fontWeight: "bold",
+    color: "#1B4D89",
+    marginBottom: 10,
   },
   instructionText: {
     fontSize: 16,
-    color: '#1B4D89',
-    marginBottom: 25
+    color: "#1B4D89",
+    marginBottom: 25,
   },
   questionContainer: {
-    backgroundColor: '#FFD700',
+    backgroundColor: "#FFD700",
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 15,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#E0B000'
+    borderColor: "#E0B000",
   },
   questionText: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: 'black'
+    fontWeight: "bold",
+    color: "black",
   },
   dropTargetLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1B4D89',
+    fontWeight: "bold",
+    color: "#1B4D89",
     marginBottom: 10,
-    alignSelf: 'flex-start',
-    marginLeft: 20
+    alignSelf: "flex-start",
+    marginLeft: 20,
   },
   dropTargetRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    width: '95%',
-    marginBottom: 20
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    width: "95%",
+    marginBottom: 20,
   },
   dropTarget: {
     width: 80,
     height: 80,
-    backgroundColor: '#FFD700',
+    backgroundColor: "#FFD700",
     borderRadius: 12,
     borderWidth: 4,
-    borderColor: '#E0B000',
-    borderStyle: 'dashed',
+    borderColor: "#E0B000",
+    borderStyle: "dashed",
     margin: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3,
   },
   correctTarget: {
-    backgroundColor: '#A5D6A7',
-    borderColor: '#4CAF50',
-    borderStyle: 'solid'
+    backgroundColor: "#A5D6A7",
+    borderColor: "#4CAF50",
+    borderStyle: "solid",
   },
   incorrectTarget: {
-    backgroundColor: '#FFCDD2',
-    borderColor: '#F44336',
-    borderStyle: 'solid'
+    backgroundColor: "#FFCDD2",
+    borderColor: "#F44336",
+    borderStyle: "solid",
   },
   dropHereText: {
     fontSize: 12,
-    color: '#1B4D89',
-    textAlign: 'center'
+    color: "#1B4D89",
+    textAlign: "center",
   },
   draggableContainer: {
-    width: '95%',
-    backgroundColor: '#7E80D8',
+    width: "95%",
+    backgroundColor: "#7E80D8",
     borderRadius: 15,
     marginVertical: 20,
     padding: 15,
-    alignItems: 'center'
+    alignItems: "center",
   },
   draggableTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
     marginBottom: 15,
-    alignSelf: 'flex-start'
+    alignSelf: "flex-start",
   },
   draggableItemsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    width: '100%',
-    paddingVertical: 10
+    flexDirection: "row",
+    justifyContent: "space-around",
+    flexWrap: "wrap",
+    width: "100%",
+    paddingVertical: 10,
   },
   draggableItem: {
     width: 70,
     height: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
     borderRadius: 12,
     borderWidth: 3,
-    borderColor: '#1E3A8A',
+    borderColor: "#1E3A8A",
     margin: 10,
     elevation: 3,
   },
   draggableItemText: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B4D89'
+    fontWeight: "bold",
+    color: "#1B4D89",
   },
   targetContent: {
-    alignItems: 'center',
-    justifyContent: 'center'
+    alignItems: "center",
+    justifyContent: "center",
   },
   targetLetterText: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B4D89'
+    fontWeight: "bold",
+    color: "#1B4D89",
   },
   homeButton: {
-    backgroundColor: '#1B4D89',
+    backgroundColor: "#1B4D89",
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 10,
-    marginTop: 'auto',
-    marginBottom: 30
+    marginTop: "auto",
+    marginBottom: 30,
   },
   homeButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   nextButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 10,
     marginTop: 10,
     marginBottom: 10,
-    elevation: 3
+    elevation: 3,
   },
   nextButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
-  
-  // Pre-game screen styles
   preGameContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    width: '100%',
+    width: "100%",
   },
   preGameTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E3A8A',
+    fontWeight: "bold",
+    color: "#1E3A8A",
     marginBottom: 8,
   },
   preGameSubtitle: {
     fontSize: 20,
-    color: '#1E3A8A',
+    color: "#1E3A8A",
     marginBottom: 20,
   },
   preGameDescription: {
     fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
+    color: "#333",
+    textAlign: "center",
     marginBottom: 20,
   },
   preGameImage: {
@@ -897,41 +1112,40 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   startGameButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
     marginVertical: 10,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   disabledButton: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: "#CCCCCC",
   },
   startGameButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
-  // Game completed screen
+
   completedContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    width: '100%',
+    width: "100%",
   },
   completedTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontWeight: "bold",
+    color: "#4CAF50",
     marginBottom: 8,
   },
   completedSubtitle: {
     fontSize: 18,
-    color: '#333',
-    textAlign: 'center',
+    color: "#333",
+    textAlign: "center",
     marginBottom: 20,
   },
   completedImage: {
@@ -941,49 +1155,48 @@ const styles = StyleSheet.create({
   },
   bonusText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF9800',
+    fontWeight: "bold",
+    color: "#FF9800",
     marginBottom: 25,
   },
   playAgainButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
     marginBottom: 10,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   playAgainButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
-  // Modal styles
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
     width: 220,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 8,
     borderWidth: 3,
   },
   correctModalContainer: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#E8F5E9',
+    borderColor: "#4CAF50",
+    backgroundColor: "#E8F5E9",
   },
   incorrectModalContainer: {
-    borderColor: '#F44336',
-    backgroundColor: '#FFEBEE',
+    borderColor: "#F44336",
+    backgroundColor: "#FFEBEE",
   },
   feedbackImage: {
     width: 100,
@@ -992,21 +1205,21 @@ const styles = StyleSheet.create({
   modalMessageText: {
     marginTop: 10,
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center'
+    fontWeight: "bold",
+    textAlign: "center",
   },
   modalDetailText: {
     marginTop: 5,
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     paddingHorizontal: 10,
   },
   correctMessageText: {
-    color: '#4CAF50',
+    color: "#4CAF50",
   },
   incorrectMessageText: {
-    color: '#F44336',
-  }
+    color: "#F44336",
+  },
 });
 
 export default DragDropGameScreen;

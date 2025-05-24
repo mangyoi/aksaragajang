@@ -1,7 +1,5 @@
-// utils/livesManager.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Interface untuk data LivesInfo yang akan dikembalikan ke komponen
 export interface LivesInfo {
   lives: number;
   maxLives: number;
@@ -9,18 +7,15 @@ export interface LivesInfo {
   isInitialized: boolean;
 }
 
-// Interface untuk data yang disimpan di AsyncStorage
 interface StoredLivesData {
   lives: number;
   lastUpdated: number;
 }
 
-// Konstanta
 const LIVES_KEY = 'carakan_game_lives';
 const MAX_LIVES = 5;
-const LIVES_RECOVERY_TIME = 30 * 60 * 1000; // 30 menit dalam milidetik
+const LIVES_RECOVERY_TIME = 1 * 60 * 1000;
 
-// Kelas pengelola nyawa
 class LivesManager {
   private lives: number;
   private lastUpdated: number;
@@ -32,7 +27,6 @@ class LivesManager {
     this.isInitialized = false;
   }
 
-  // Inisialisasi nyawa dari storage
   public async initialize(): Promise<LivesInfo> {
     try {
       const livesData = await AsyncStorage.getItem(LIVES_KEY);
@@ -41,11 +35,8 @@ class LivesManager {
         const parsedData: StoredLivesData = JSON.parse(livesData);
         this.lives = parsedData.lives;
         this.lastUpdated = parsedData.lastUpdated;
-        
-        // Periksa apakah nyawa harus dipulihkan berdasarkan waktu yang berlalu
         this.recoverLivesBasedOnTime();
       } else {
-        // Pertama kali aplikasi dijalankan, atur nilai default
         await this.saveLivesToStorage();
       }
       
@@ -53,7 +44,6 @@ class LivesManager {
       return this.getLivesInfo();
     } catch (error) {
       console.error('Error initializing lives:', error);
-      // Default fallback
       this.lives = MAX_LIVES;
       this.lastUpdated = Date.now();
       this.isInitialized = true;
@@ -61,7 +51,6 @@ class LivesManager {
     }
   }
 
-  // Simpan status nyawa saat ini ke storage
   private async saveLivesToStorage(): Promise<void> {
     try {
       const livesData: StoredLivesData = {
@@ -74,22 +63,17 @@ class LivesManager {
     }
   }
 
-  // Hitung dan pulihkan nyawa berdasarkan waktu yang berlalu
   private recoverLivesBasedOnTime(): void {
     const now = Date.now();
     const elapsedTime = now - this.lastUpdated;
     
     if (elapsedTime > 0 && this.lives < MAX_LIVES) {
-      // Hitung berapa banyak nyawa yang harus dipulihkan berdasarkan waktu
       const livesToRecover = Math.floor(elapsedTime / LIVES_RECOVERY_TIME);
       
       if (livesToRecover > 0) {
         this.lives = Math.min(MAX_LIVES, this.lives + livesToRecover);
-        
-        // Perbarui waktu terakhir diperbarui berdasarkan nyawa yang dipulihkan
         this.lastUpdated = this.lastUpdated + (livesToRecover * LIVES_RECOVERY_TIME);
         
-        // Jika waktu yang berlalu lebih dari yang diperlukan untuk pemulihan penuh
         if (this.lives === MAX_LIVES) {
           this.lastUpdated = now;
         }
@@ -99,7 +83,6 @@ class LivesManager {
     }
   }
 
-  // Dapatkan nyawa saat ini dan waktu hingga pemulihan berikutnya
   public getLivesInfo(): LivesInfo {
     const now = Date.now();
     let timeUntilNextLife = 0;
@@ -117,32 +100,28 @@ class LivesManager {
     };
   }
 
-  // Gunakan nyawa untuk bermain game
   public async useLife(): Promise<boolean> {
     if (!this.isInitialized) {
       await this.initialize();
     }
     
-    // Pertama periksa apakah kita harus memulihkan nyawa
     this.recoverLivesBasedOnTime();
     
     if (this.lives > 0) {
       this.lives -= 1;
       this.lastUpdated = Date.now();
       await this.saveLivesToStorage();
-      return true; // Berhasil menggunakan nyawa
+      return true;
     }
     
-    return false; // Tidak ada nyawa yang tersedia
+    return false;
   }
 
-  // Tambahkan nyawa (dapat digunakan untuk hadiah atau pembelian)
   public async addLife(): Promise<LivesInfo> {
     if (!this.isInitialized) {
       await this.initialize();
     }
     
-    // Pertama periksa apakah kita harus memulihkan nyawa
     this.recoverLivesBasedOnTime();
     
     if (this.lives < MAX_LIVES) {
@@ -153,7 +132,6 @@ class LivesManager {
     return this.getLivesInfo();
   }
 
-  // Reset nyawa ke maksimum (dapat digunakan untuk pengujian atau reset aplikasi)
   public async resetLives(): Promise<LivesInfo> {
     this.lives = MAX_LIVES;
     this.lastUpdated = Date.now();
@@ -161,7 +139,6 @@ class LivesManager {
     return this.getLivesInfo();
   }
 
-  // Format waktu tersisa sampai pemulihan nyawa berikutnya
   public formatTimeRemaining(milliseconds: number): string {
     if (milliseconds <= 0) return '0:00';
     
@@ -172,7 +149,6 @@ class LivesManager {
   }
 }
 
-// Buat singleton instance dari LivesManager
 const livesManager = new LivesManager();
 
 export default livesManager;

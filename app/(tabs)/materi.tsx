@@ -151,7 +151,6 @@ const CarakanApp = () => {
 
         await AsyncStorage.setItem('userStreakData', JSON.stringify(updatedStreakData));
 
-        // 🟡 Cek jika mencapai 60 detik dan modal belum pernah muncul hari ini
         if (
           streakData.materialTimeSpent < 60 &&
           totalTimeSpent >= 60
@@ -247,12 +246,10 @@ const CarakanApp = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header - Centered Title Only */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Carakan</Text>
       </View>
 
-      {/* Back Button - Positioned below header */}
       <View style={styles.backButtonContainer}>
         <TouchableOpacity 
           onPress={handleBackNavigation} 
@@ -271,7 +268,6 @@ const CarakanApp = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Image Slider Section */}
         <View style={styles.sliderSection}>
           <View style={styles.sliderCard}>
             <FlatList
@@ -306,7 +302,6 @@ const CarakanApp = () => {
           </View>
         </View>
         
-        {/* Sowara Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Sowara</Text>
@@ -326,7 +321,6 @@ const CarakanApp = () => {
           </View>
         </View>
         
-        {/* Contoh Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Kaangguy Conto</Text>
@@ -341,7 +335,6 @@ const CarakanApp = () => {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Modal untuk Pronounce */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -378,7 +371,6 @@ const CarakanApp = () => {
         </View>
       </Modal>
 
-      {/* Modal untuk Streak Alert */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -427,7 +419,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   
-  // Header Styles - Only for title
   header: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -447,7 +438,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Back Button Container - Positioned below header
   backButtonContainer: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -470,7 +460,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   
-  // Scroll View Styles
   scrollView: {
     flex: 1,
   },
@@ -478,10 +467,9 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   
-  // Slider Section
   sliderSection: {
     paddingHorizontal: 20,
-    paddingTop: 12, // Reduced since back button has its own padding
+    paddingTop: 12, 
   },
   sliderCard: {
     backgroundColor: 'white',
@@ -516,7 +504,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   
-  // Section Styles
   section: {
     paddingHorizontal: 20,
     marginTop: 24,
@@ -537,7 +524,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   
-  // Sowara Styles
   sowaraCard: {
     backgroundColor: 'white',
     borderRadius: 16,
@@ -596,7 +582,6 @@ const styles = StyleSheet.create({
     margin: 2,
   },
   
-  // Contoh Styles
   contoSection: {
     backgroundColor: 'white',
     borderRadius: 16,
@@ -712,7 +697,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   
-  // Streak Modal Styles
   streakModalContainer: {
     backgroundColor: 'white',
     borderRadius: 20,

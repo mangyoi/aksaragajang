@@ -209,7 +209,6 @@ const NanMaenanGameScreen: React.FC = () => {
     }
   ];
 
-  // Check lives status when component mounts
   useEffect(() => {
     const checkLives = async () => {
       const info = await livesManager.initialize();
@@ -219,9 +218,7 @@ const NanMaenanGameScreen: React.FC = () => {
     checkLives();
   }, []);
 
-  // Start game tanpa mengonsumsi nyawa
   const startGame = async () => {
-    // Periksa apakah masih ada nyawa tersisa
     const info = await livesManager.getLivesInfo();
     setLivesInfo(info);
     
@@ -236,7 +233,6 @@ const NanMaenanGameScreen: React.FC = () => {
     setSelectedOption(null);
   };
 
-  // Ubah useEffect untuk mengurangi nyawa saat jawaban salah
   useEffect(() => {
     if (selectedOption !== null) {
       const currentOptions = questions[currentQuestionIndex].options;
@@ -245,21 +241,17 @@ const NanMaenanGameScreen: React.FC = () => {
       
       setIsAnswerCorrect(isCorrect);
       
-      // Jika jawaban salah, kurangi nyawa
       if (!isCorrect) {
         const reduceLife = async () => {
-          // Gunakan useLife dari livesManager untuk mengurangi nyawa
           const stillHasLives = await livesManager.useLife();
           const updatedInfo = await livesManager.getLivesInfo();
           setLivesInfo(updatedInfo);
           
-          // Jika nyawa habis, tampilkan modal no lives setelah pesan jawaban salah
           if (!stillHasLives || updatedInfo.lives <= 0) {
             setTimeout(() => {
               setAlertVisible(false);
               setTimeout(() => {
                 setShowNoLivesModal(true);
-                // Kembali ke menu utama jika nyawa habis
                 setTimeout(() => {
                   router.push('/mainmenu');
                 }, 3000);
@@ -304,9 +296,7 @@ const NanMaenanGameScreen: React.FC = () => {
     }
   };
 
-  // Restart game tanpa mengurangi nyawa
   const restartGame = async () => {
-    // Periksa apakah masih ada nyawa tersisa
     const info = await livesManager.getLivesInfo();
     setLivesInfo(info);
     
@@ -322,9 +312,7 @@ const NanMaenanGameScreen: React.FC = () => {
     setGameCompleteModalVisible(false);
   };
 
-  // Add a life when completing the game with good score
   const completeGameWithReward = async () => {
-    // If player got most answers correct, reward with extra life
     if (correctAnswers >= Math.floor(questions.length * 0.8)) {
       await livesManager.addLife();
       const updatedInfo = await livesManager.getLivesInfo();
@@ -335,12 +323,10 @@ const NanMaenanGameScreen: React.FC = () => {
     router.push('/mainmenu');
   };
 
-  // Handle lives updates
   const handleLivesUpdated = (info: LivesInfo) => {
     setLivesInfo(info);
   };
   
-  // Close no lives modal and return to main menu
   const handleNoLivesGoHome = () => {
     setShowNoLivesModal(false);
     router.push('/mainmenu');
@@ -382,7 +368,6 @@ const NanMaenanGameScreen: React.FC = () => {
         />
 
         {!gameStarted ? (
-          // Game start screen
           <View style={styles.startGameContainer}>
             <Text style={styles.startGameText}>
               Siap untuk bermain? Nyawa akan berkurang jika jawaban salah.
@@ -410,7 +395,6 @@ const NanMaenanGameScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         ) : (
-          // Game content
           <>
             <View style={styles.mainSymbolContainer}>
               <View style={styles.questionContainer}>
@@ -783,7 +767,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   
-  // Game complete modal
   gameCompleteContainer: {
     width: 300,
     backgroundColor: 'white',

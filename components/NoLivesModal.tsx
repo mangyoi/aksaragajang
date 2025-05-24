@@ -1,4 +1,3 @@
-// components/NoLivesModal.tsx
 import React from 'react';
 import { 
   View, 
@@ -9,7 +8,6 @@ import {
   Image
 } from 'react-native';
 
-// Props untuk komponen
 interface NoLivesModalProps {
   visible: boolean;
   onClose: () => void;
@@ -23,8 +21,6 @@ const NoLivesModal = ({
   onGoHome,
   timeUntilNextLife 
 }: NoLivesModalProps) => {
-  
-  // Format waktu hingga nyawa berikutnya dalam format yang dapat dibaca
   const formatTime = (milliseconds: number): string => {
     if (!milliseconds || milliseconds <= 0) return '0:00';
     
