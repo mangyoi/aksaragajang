@@ -358,13 +358,13 @@ const DragDropGameScreen = () => {
   };
 
   useEffect(() => {
-  if (dropTargets.some(t => t.layout === null)) {
-    const timeout = setTimeout(() => {
-      measureDropTargets(true); 
-    }, 300);
-    return () => clearTimeout(timeout);
-  }
-}, [dropTargets]);
+    if (dropTargets.some((t) => t.layout === null)) {
+      const timeout = setTimeout(() => {
+        measureDropTargets(true);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [dropTargets]);
 
   useEffect(() => {
     if (gameStarted && !isTransitioning) {
@@ -422,12 +422,12 @@ const DragDropGameScreen = () => {
   };
 
   const finalizeMeasurements = (targets, shouldUpdate) => {
-  if (shouldUpdate) {
-    setDropTargets(targets);
-    hasMeasuredRef.current = true;
-  }
-  setIsMeasuring(false);
-};
+    if (shouldUpdate) {
+      setDropTargets(targets);
+      hasMeasuredRef.current = true;
+    }
+    setIsMeasuring(false);
+  };
 
   useEffect(() => {
     if (feedbackModal.visible) {
@@ -439,9 +439,9 @@ const DragDropGameScreen = () => {
     }
   }, [feedbackModal.visible, allCorrect]);
 
-  const checkAllCorrect = (updatedTargets) => {
+  const checkAllCorrect = (updatedTargets: DropTarget[]) => {
     const isAllCorrect = updatedTargets.every(
-      (target) => target.isCorrect === true
+      (target: DropTarget) => target.isCorrect === true
     );
 
     if (isAllCorrect && !allCorrect) {
@@ -479,10 +479,10 @@ const DragDropGameScreen = () => {
   };
 
   const handleSuccessfulDrop = async (
-    itemId,
-    targetId,
-    setVisible,
-    resetPosition
+    itemId: number,
+    targetId: number,
+    setVisible: (visible: boolean) => void,
+    resetPosition: () => void
   ) => {
     const item = draggableItems.find((item) => item.id === itemId);
     const target = dropTargets.find((target) => target.id === targetId);
@@ -505,34 +505,40 @@ const DragDropGameScreen = () => {
       setVisible(false);
       checkAllCorrect(updatedTargets);
 
-      setFeedbackModal({
-        visible: true,
-        isCorrect: true,
-        message: "",
-      });
+      setTimeout(() => {
+        setFeedbackModal({
+          visible: true,
+          isCorrect: true,
+          message: "",
+        });
+      }, 100);
     } else {
       runOnJS(resetPosition)();
 
-      const reduceLife = async () => {
-        const stillHasLives = await livesManager.useLife();
-        const updatedInfo = await livesManager.getLivesInfo();
-        setLivesInfo(updatedInfo);
-
-        if (!stillHasLives || updatedInfo.lives <= 0) {
-          setTimeout(() => {
-            setFeedbackModal({ visible: false });
-            setShowNoLivesModal(true);
-          }, 1500);
-        }
-      };
-
-      await reduceLife();
+      const stillHasLives = await livesManager.useLife();
+      const updatedInfo = await livesManager.getLivesInfo();
+      setLivesInfo(updatedInfo);
 
       setFeedbackModal({
         visible: true,
         isCorrect: false,
-        message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${livesInfo.lives}`,
+        message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`,
       });
+
+      if (!stillHasLives || updatedInfo.lives <= 0) {
+        setTimeout(() => {
+          setFeedbackModal({ visible: false });
+          setShowNoLivesModal(true);
+        }, 1500);
+      }
+
+      // await reduceLife();
+
+      // setFeedbackModal({
+      //   visible: true,
+      //   isCorrect: false,
+      //   message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`,
+      // });
     }
   };
 
@@ -582,12 +588,17 @@ const DragDropGameScreen = () => {
       scale.value = withTiming(1, { duration: 150 });
     };
 
+    let startX = 0;
+    let startY = 0;
+
     const panGesture = Gesture.Pan()
       .enabled(!isLocked)
-      .onStart(() => {
-        if (isTransitioning) return;
+      .onStart((event) => {
+        if (isTransitioning || !hasMeasuredRef.current) return;
         isDragging.value = true;
         scale.value = withTiming(1.1, { duration: 100 });
+        startX = event.absoluteX;
+        startY = event.absoluteY;
         runOnJS(setActiveItemId)(item.id);
       })
       .onUpdate((event) => {
@@ -602,15 +613,6 @@ const DragDropGameScreen = () => {
         };
       })
       .onEnd((event) => {
-        if (
-          !event ||
-          typeof event.absoluteX !== "number" ||
-          typeof event.absoluteY !== "number"
-        ) {
-          runOnJS(resetItemPosition)();
-          return;
-        }
-
         const itemPosition = {
           x: event.absoluteX,
           y: event.absoluteY,
@@ -618,7 +620,7 @@ const DragDropGameScreen = () => {
 
         let droppedOnTarget = false;
         let targetId = null;
-        const buffer = 20;
+        const buffer = 30;
 
         for (const target of dropTargets) {
           if (target.occupied || !target.layout) continue;
@@ -823,7 +825,10 @@ const DragDropGameScreen = () => {
           )}
         </View>
 
-        <LivesDisplay onLivesUpdated={handleLivesUpdated} />
+        <LivesDisplay
+          onLivesUpdated={handleLivesUpdated}
+          livesInfo={livesInfo}
+        />
 
         <NoLivesModal
           visible={showNoLivesModal}
