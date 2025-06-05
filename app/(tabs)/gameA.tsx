@@ -670,9 +670,9 @@ const MatchingGameScreen: React.FC = () => {
     return (
       <View style={styles.preGameContainer}>
         <Text style={styles.preGameTitle}>Carakan - Nan Maenan</Text>
-        <Text style={styles.preGameDescription}>
+        {/* <Text style={styles.preGameDescription}>
           Pilih pasangan kata yang cocok. Nyawa akan berkurang jika kamu salah memilih pasangan.
-        </Text>
+        </Text> */}
         
         <Image 
           source={require('../../assets/images/tampilan/AstronoutGameA.png')} 
@@ -1074,8 +1074,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   preGameImage: {
-    width: 200,
-    height: 150,
+    width: 350,
+    height: 175,
     marginBottom: 30,
   },
   // Modal styles

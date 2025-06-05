@@ -465,7 +465,7 @@ const DragDropGameScreen = () => {
         rewardPlayer();
       }
 
-      setTimeout(() => {
+      InteractionManager.runAfterInteractions(() => {
         setFeedbackModal({
           visible: true,
           isCorrect: true,
@@ -474,7 +474,7 @@ const DragDropGameScreen = () => {
               ? "Benar! Lanjutkan ke soal berikutnya."
               : "Semua Benar! Anda telah menyelesaikan semua soal dan mendapatkan nyawa tambahan!",
         });
-      }, 300);
+      });
     }
   };
 
@@ -505,13 +505,13 @@ const DragDropGameScreen = () => {
       setVisible(false);
       checkAllCorrect(updatedTargets);
 
-      setTimeout(() => {
+      InteractionManager.runAfterInteractions(() => {
         setFeedbackModal({
           visible: true,
           isCorrect: true,
           message: "",
         });
-      }, 100);
+      });
     } else {
       runOnJS(resetPosition)();
 
@@ -519,10 +519,12 @@ const DragDropGameScreen = () => {
       const updatedInfo = await livesManager.getLivesInfo();
       setLivesInfo(updatedInfo);
 
-      setFeedbackModal({
-        visible: true,
-        isCorrect: false,
-        message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`,
+      InteractionManager.runAfterInteractions(() => {
+        setFeedbackModal({
+          visible: true,
+          isCorrect: false,
+          message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`,
+        });
       });
 
       if (!stillHasLives || updatedInfo.lives <= 0) {
@@ -738,38 +740,39 @@ const DragDropGameScreen = () => {
   const renderPreGameScreen = () => {
     return (
       <View style={styles.preGameContainer}>
-        <Text style={styles.preGameTitle}>Carakan - Nan Maenan</Text>
-        <Text style={styles.preGameSubtitle}>Permainan Tempel Aksara</Text>
+        {/* <Text style={styles.preGameTitle}>Carakan - Nan Maenan</Text> */}
 
-        <Text style={styles.preGameDescription}>
-          Tarik aksara dan letakkan di posisi yang tepat. Nyawa akan berkurang
-          jika aksara ditempatkan pada posisi yang salah.
-        </Text>
-
-        <Image
-          source={require("../../assets/images/tampilan/AstronoutGameA.png")}
-          style={styles.preGameImage}
-          resizeMode="contain"
-        />
+        <View style={styles.characterRow}>
+          {/* <View style={styles.speechBubble}>
+            <Text style={styles.speechText}>
+              cocok agi okara{"\n"}e baba reya
+            </Text>
+          </View> */}
+          <Image
+            source={require("../../assets/images/tampilan/AstronoutGameA.png")}
+            style={styles.astronautImage}
+            resizeMode="contain"
+          />
+        </View>
 
         <TouchableOpacity
           style={[
-            styles.startGameButton,
+            styles.startButton,
             livesInfo.lives <= 0 && styles.disabledButton,
           ]}
           onPress={startGame}
           disabled={livesInfo.lives <= 0}
         >
-          <Text style={styles.startGameButtonText}>
+          <Text style={styles.startButtonText}>
             Mulai Permainan {livesInfo.lives <= 0 ? "(Nyawa Habis)" : ""}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.homeButton}
+          style={[styles.startButton, styles.menuButton]}
           onPress={() => router.push("/mainmenu")}
         >
-          <Text style={styles.homeButtonText}>Kembali ke Menu Utama</Text>
+          <Text style={styles.menuButtonText}> Menu Utama </Text>
         </TouchableOpacity>
       </View>
     );
@@ -908,9 +911,8 @@ const DragDropGameScreen = () => {
             </TouchableOpacity>
           </>
         )}
-
-        <FeedbackModal />
       </SafeAreaView>
+      <FeedbackModal />
     </GestureHandlerRootView>
   );
 };
@@ -1087,44 +1089,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  preGameContainer: {
-    flex: 1,
-    justifyContent: "center",
+
+  characterRow: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: 20,
-    width: "100%",
-  },
-  preGameTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#1E3A8A",
-    marginBottom: 8,
-  },
-  preGameSubtitle: {
-    fontSize: 20,
-    color: "#1E3A8A",
-    marginBottom: 20,
-  },
-  preGameDescription: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  preGameImage: {
-    width: 150,
-    height: 150,
+    justifyContent: "center",
     marginBottom: 30,
+    gap: 10,
   },
-  startGameButton: {
-    backgroundColor: "#4CAF50",
+
+  speechText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+
+  astronautImage: {
+    marginTop: 140,
+    width: 350,
+    height: 175,
+  },
+
+  // ...existing code...
+  startButton: {
+    backgroundColor: "#FFD700",
+    borderColor: "#1B4D89",
+    borderWidth: 2,
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     borderRadius: 10,
-    marginVertical: 10,
+    marginBottom: 10,
     width: "80%",
     alignItems: "center",
+    alignSelf: "center", // tombol rata tengah
+    justifyContent: "center", // isi tombol rata tengah secara vertikal
   },
+
+  startButtonText: {
+    color: "#1B4D89",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  menuButton: {
+    backgroundColor: "#1E3A8A",
+    borderColor: "#4D5BD1",
+  },
+
+  menuButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
   disabledButton: {
     backgroundColor: "#CCCCCC",
   },

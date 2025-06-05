@@ -30,7 +30,7 @@ interface ContoItem {
 
 interface PronounceItem {
   id: string;
-  imageSource: any;
+  letter: string;
 }
 
 type StreakData = {
@@ -83,12 +83,34 @@ const mainImages = [
   require("../../assets/images/tampilan/pangangguy.png"),
 ];
 
-const pronounceData: PronounceItem[] = Array(20)
-  .fill(null)
-  .map((_, index) => ({
-    id: index.toString(),
-    imageSource: require("../../assets/images/tampilan/aksara/a.png"),
-  }));
+// const pronounceData: PronounceItem[] = Array(20)
+//   .fill(null)
+//   .map((_, index) => ({
+//     id: index.toString(),
+//     imageSource: require("../../assets/images/tampilan/aksara/a.png"),
+//   }));
+const pronounceData: PronounceItem[] = [
+  { id: "1", letter: "ꦲ" },
+  { id: "2", letter: "ꦤ" },
+  { id: "3", letter: "ꦕ" },
+  { id: "4", letter: "ꦫ" },
+  { id: "5", letter: "ꦏ" },
+  { id: "6", letter: "ꦢ" },
+  { id: "7", letter: "ꦠ" },
+  { id: "8", letter: "ꦱ" },
+  { id: "9", letter: "ꦮ" },
+  { id: "10", letter: "ꦭ" },
+  { id: "11", letter: "ꦥ" },
+  { id: "12", letter: "ꦣ" },
+  { id: "13", letter: "ꦗ" },
+  { id: "14", letter: "ꦪ" },
+  { id: "15", letter: "ꦚ" },
+  { id: "16", letter: "ꦩ" },
+  { id: "17", letter: "ꦒ" },
+  { id: "18", letter: "ꦧ" },
+  { id: "19", letter: "ꦛ" },
+  { id: "20", letter: "ꦔ" },
+];
 
 const CarakanApp = () => {
   const [pronounceModalVisible, setPronounceModalVisible] = useState(false);
@@ -261,7 +283,7 @@ const CarakanApp = () => {
 
   const renderPronounceItem = ({ item }: { item: PronounceItem }) => (
     <TouchableOpacity style={styles.pronounceItem}>
-      <Image source={item.imageSource} style={styles.pronounceImage} />
+      <Text style={styles.pronounceLetter   }>{item.letter}</Text>
     </TouchableOpacity>
   );
 
@@ -712,10 +734,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000000",
   },
-  pronounceImage: {
-    width: "65%",
-    height: "65%",
-    resizeMode: "contain",
+  pronounceLetter: {
+    fontSize: 36, // atau bisa 40-48 jika mau lebih besar
+    fontWeight: "bold",
+    color: "#1B4D89",
   },
 
   streakModalContainer: {
