@@ -88,11 +88,11 @@ const CustomModal: React.FC<CustomModalProps> = ({
             </TouchableOpacity>
           )}
 
-          <Image
+          {/* <Image
             source={imageSource}
             style={styles.modalImage}
             resizeMode="contain"
-          />
+          /> */}
           <Text style={styles.modalTitle}>{title}</Text>
           <Text style={styles.modalMessage}>{message}</Text>
 
@@ -148,8 +148,8 @@ const MatchingGameScreen: React.FC = () => {
       timeLimit: 60,
       wordPairs: [
         { id: 1, leftWord: 'ꦲꦥꦤ', rightWord: 'Apana' },
-        { id: 2, leftWord: 'ᮏᮔ᭄ᮒᮁ', rightWord: 'Jantar' },
-        { id: 3, leftWord: 'ᮞᮍᮥ', rightWord: 'Sangu' },
+        { id: 2, leftWord: 'ꦤꦭꦺꦏ', rightWord: 'Naleka' },
+        { id: 3, leftWord: 'ꦱꦭꦗ', rightWord: 'Salaja' },
       ]
     },
     {
@@ -157,10 +157,10 @@ const MatchingGameScreen: React.FC = () => {
       title: "Level 2 - Dasar",
       timeLimit: 75,
       wordPairs: [
-        { id: 1, leftWord: 'ᮃᮕᮔ', rightWord: 'Apana' },
-        { id: 2, leftWord: 'ᮏᮔ᭄ᮒᮁ', rightWord: 'Jantar' },
-        { id: 3, leftWord: 'ᮞᮍᮥ', rightWord: 'Sangu' },
-        { id: 4, leftWord: 'ᮊᮞᮞᮔ᭄', rightWord: 'Kasana' },
+        { id: 1, leftWord: 'ꦱꦺꦴꦕꦤ', rightWord: 'Socana' },
+        { id: 2, leftWord: 'ꦥꦺꦴꦠꦺꦴꦤ', rightWord: 'Potona' },
+        { id: 3, leftWord: 'ꦏꦣꦗ', rightWord: 'Kadhaja' },
+        { id: 4, leftWord: 'ꦒꦶꦒꦶꦤ', rightWord: 'Gigina' },
       ]
     },
     {
@@ -168,11 +168,11 @@ const MatchingGameScreen: React.FC = () => {
       title: "Level 3 - Menengah",
       timeLimit: 90,
       wordPairs: [
-        { id: 1, leftWord: 'ᮃᮕᮔ', rightWord: 'Apana' },
-        { id: 2, leftWord: 'ᮏᮔ᭄ᮒᮁ', rightWord: 'Jantar' },
-        { id: 3, leftWord: 'ᮞᮍᮥ', rightWord: 'Sangu' },
-        { id: 4, leftWord: 'ᮊᮞᮞᮔ᭄', rightWord: 'Kasana' },
-        { id: 5, leftWord: 'ᮎᮎᮁ', rightWord: 'Cacar' },
+        { id: 1, leftWord: 'ꦱꦺꦴꦕꦤ', rightWord: 'Socana' },
+        { id: 2, leftWord: 'ꦗꦭꦤꦺ', rightWord: 'Jalane' },
+        { id: 3, leftWord: 'ꦲꦱꦏꦺꦴꦭ', rightWord: 'Asakola' },
+        { id: 4, leftWord: 'ꦗꦏꦗ', rightWord: 'Jakaja' },
+        { id: 5, leftWord: 'ꦱꦭꦤ', rightWord: 'Salana' },
       ]
     },
     {
@@ -180,12 +180,12 @@ const MatchingGameScreen: React.FC = () => {
       title: "Level 4 - Mahir",
       timeLimit: 100,
       wordPairs: [
-        { id: 1, leftWord: 'ᮃᮕᮔ', rightWord: 'Apana' },
-        { id: 2, leftWord: 'ᮏᮔ᭄ᮒᮁ', rightWord: 'Jantar' },
-        { id: 3, leftWord: 'ᮞᮍᮥ', rightWord: 'Sangu' },
-        { id: 4, leftWord: 'ᮊᮞᮞᮔ᭄', rightWord: 'Kasana' },
-        { id: 5, leftWord: 'ᮎᮎᮁ', rightWord: 'Cacar' },
-        { id: 6, leftWord: 'ᮋᮒᮔ᭄', rightWord: 'Katana' },
+        { id: 1, leftWord: 'ꦭꦚꦭ', rightWord: 'Lanyala' },
+        { id: 2, leftWord: 'ꦥꦭꦱ', rightWord: 'Palasa' },
+        { id: 3, leftWord: 'ꦱꦭꦱ', rightWord: 'Salasa' },
+        { id: 4, leftWord: 'ꦥꦏꦗ', rightWord: 'Pakaja' },
+        { id: 5, leftWord: 'ꦲꦺꦴꦥꦩ', rightWord: 'Opama' },
+        { id: 6, leftWord: 'ꦗꦒꦤ', rightWord: 'Jagana' },
       ]
     },
     {
@@ -193,13 +193,13 @@ const MatchingGameScreen: React.FC = () => {
       title: "Level 5 - Ahli",
       timeLimit: 120,
       wordPairs: [
-        { id: 1, leftWord: 'ᮃᮕᮔ', rightWord: 'Apana' },
-        { id: 2, leftWord: 'ᮏᮔ᭄ᮒᮁ', rightWord: 'Jantar' },
-        { id: 3, leftWord: 'ᮞᮍᮥ', rightWord: 'Sangu' },
-        { id: 4, leftWord: 'ᮊᮞᮞᮔ᭄', rightWord: 'Kasana' },
-        { id: 5, leftWord: 'ᮎᮎᮁ', rightWord: 'Cacar' },
-        { id: 6, leftWord: 'ᮋᮒᮔ᭄', rightWord: 'Katana' },
-        { id: 7, leftWord: 'ᮌᮂᮔ᭄', rightWord: 'Gana' },
+        { id: 1, leftWord: 'ꦧꦶꦒꦶꦤ', rightWord: 'Bigina' },
+        { id: 2, leftWord: 'ꦲꦒꦶꦭꦶ', rightWord: 'Agili' },
+        { id: 3, leftWord: 'ꦱꦥꦺꦴꦭꦺꦴ', rightWord: 'Sapolo' },
+        { id: 4, leftWord: 'ꦏꦺꦴꦥꦶ', rightWord: 'Kopi' },
+        { id: 5, leftWord: 'ꦱꦧ', rightWord: 'Saba' },
+        { id: 6, leftWord: 'ꦱꦥꦺ', rightWord: 'Sape' },
+        { id: 7, leftWord: 'ꦏꦱꦺꦴ', rightWord: 'Kaso' },
       ]
     }
   ];
@@ -641,7 +641,7 @@ const MatchingGameScreen: React.FC = () => {
       <View style={styles.completionContainer}>
         <Text style={styles.completionTitle}>Selamat!</Text>
         <Text style={styles.completionText}>
-          Kamu telah menyelesaikan semua level permainan.
+          Ba'na la mamaree kakabbi level permainan
         </Text>
         <Image 
           source={require('../../assets/images/tampilan/AstronoutGameA.png')} 
@@ -652,14 +652,14 @@ const MatchingGameScreen: React.FC = () => {
           style={styles.startButton}
           onPress={startGame}
         >
-          <Text style={styles.startButtonText}>Main Lagi</Text>
+          <Text style={styles.startButtonText}>Maen pole</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.startButton, styles.menuButton]}
           onPress={goToMainMenu}
         >
-          <Text style={styles.menuButtonText}>Kembali ke Menu Utama</Text>
+          <Text style={styles.menuButtonText}>Abali ka Menu Utama</Text>
         </TouchableOpacity>
       </View>
     );
@@ -686,7 +686,7 @@ const MatchingGameScreen: React.FC = () => {
           disabled={livesInfo.lives <= 0}
         >
           <Text style={styles.startButtonText}>
-            Mulai Permainan {livesInfo.lives <= 0 ? "(Nyawa Habis)" : ""}
+            Molai Permainan {livesInfo.lives <= 0 ? "(Nyawa Habis)" : ""}
           </Text>
         </TouchableOpacity>
 
@@ -694,7 +694,7 @@ const MatchingGameScreen: React.FC = () => {
           style={[styles.startButton, styles.menuButton]}
           onPress={goToMainMenu}
         >
-          <Text style={styles.menuButtonText}>Kembali ke Menu Utama</Text>
+          <Text style={styles.menuButtonText}>Abali ka Menu Utama</Text>
         </TouchableOpacity>
       </View>
     );
@@ -710,7 +710,7 @@ const MatchingGameScreen: React.FC = () => {
         primaryButtonAction={modalPrimaryButtonAction}
         secondaryButtonText={modalSecondaryButtonText}
         secondaryButtonAction={modalSecondaryButtonAction}
-        imageSource={modalImage}
+        // imageSource={modalImage}
         onClose={hideModal}
       />
       
@@ -721,7 +721,7 @@ const MatchingGameScreen: React.FC = () => {
         message={modalMessage}
         primaryButtonText={modalPrimaryButtonText}
         primaryButtonAction={modalPrimaryButtonAction}
-        imageSource={modalImage}
+        // imageSource={modalImage}
       />
       
       {/* No Lives Modal */}
@@ -735,14 +735,14 @@ const MatchingGameScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerText}>Carakan</Text>
         
-        {isGameActive && !allLevelsCompleted && (
-          <TouchableOpacity 
-            style={styles.resetLevelButton}
-            onPress={() => initializeLevel(currentLevelIndex)}
-          >
-            <Text style={styles.resetLevelText}>Reset Level</Text>
-          </TouchableOpacity>
-        )}
+        {/* {isGameActive && !allLevelsCompleted && (
+          // <TouchableOpacity 
+          //   style={styles.resetLevelButton}
+          //   onPress={() => initializeLevel(currentLevelIndex)}
+          // >
+          //   <Text style={styles.resetLevelText}>Reset Level</Text>
+          // </TouchableOpacity>
+        )} */}
       </View>
       
       {/* Lives Display */}

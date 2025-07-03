@@ -123,23 +123,23 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 9,
-      carakanText: 'lorem',
+      carakanText: 'ꦲꦱꦏꦺꦴꦭ',
       answers: [
-        { id: 1, text: 'Wanga' },
-        { id: 2, text: 'Waha' },
-        { id: 3, text: 'Wuga' },
-        { id: 4, text: 'Wuha' }
+        { id: 1, text: 'Akaca' },
+        { id: 2, text: 'Sakola' },
+        { id: 3, text: 'Pokola' },
+        { id: 4, text: 'Asakola' }
       ],
       correctAnswerId: 4
     },
     {
       id: 10,
-      carakanText: 'lorem',
+      carakanText: 'ꦲꦏꦕ',
       answers: [
-        { id: 1, text: 'Sangu' },
-        { id: 2, text: 'Sanga' },
+        { id: 1, text: 'Akaca' },
+        { id: 2, text: 'Saga' },
         { id: 3, text: 'Sango' },
-        { id: 4, text: 'Sengu' }
+        { id: 4, text: 'Pana' }
       ],
       correctAnswerId: 1
     }

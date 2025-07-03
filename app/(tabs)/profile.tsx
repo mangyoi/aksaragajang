@@ -68,15 +68,17 @@ const ProfileScreen = () => {
   const [lastSharedMilestone, setLastSharedMilestone] = useState<number | null>(
     null
   );
-  const shareMilestones = [7, 30, 100, 200];
+  const shareMilestones = [1, 7, 30, 100, 200];
 
-  // State untuk modal share
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [showMilestoneWarning, setShowMilestoneWarning] = useState(false);
 
-  // Referensi untuk ViewShot
   const shareViewRef = useRef<any>(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleBackNavigation = () => {
     router.back();
@@ -85,6 +87,12 @@ const ProfileScreen = () => {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  // useEffect(() => { 
+  //   if (__DEV__) {
+  //     AsyncStorage.removeItem("lastSharedMilestone");
+  //   }
+  // }, []);
 
   useEffect(() => {
     const loadTimeData = async () => {
@@ -189,22 +197,22 @@ const ProfileScreen = () => {
     setPasswordError("");
 
     if (!currentPassword) {
-      setPasswordError("Password saat ini harus diisi");
+      setPasswordError("Sandi se sateya kodhu e esse'e");
       return false;
     }
 
     if (!newPassword) {
-      setPasswordError("Password baru harus diisi");
+      setPasswordError("Sandi anyar kodhu e esse'e");
       return false;
     }
 
     if (newPassword.length < 6) {
-      setPasswordError("Password baru minimal 6 karakter");
+      setPasswordError("Sandi anyar kodhu e paleng enja' 6 huruf");
       return false;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("Password baru tidak cocok dengan konfirmasi");
+      setPasswordError("Sandi anyar ta' cocok kalaban konfirmasi");
       return false;
     }
 
@@ -222,7 +230,7 @@ const ProfileScreen = () => {
     try {
       const user = auth.currentUser;
       if (!user || !user.email) {
-        throw new Error("User tidak ditemukan");
+        throw new Error("User Ta' Etemmo");
       }
 
       const credential = EmailAuthProvider.credential(
@@ -247,11 +255,11 @@ const ProfileScreen = () => {
       console.error("Error changing password:", error);
 
       if (error.code === "auth/wrong-password") {
-        setPasswordError("Password saat ini salah");
+        setPasswordError("Sandi se e pamaso' salah");
       } else if (error.code === "auth/too-many-requests") {
-        setPasswordError("Terlalu banyak percobaan. Coba lagi nanti");
+        setPasswordError("Banya' gallu' percobaan. Coba pole daggi'");
       } else {
-        setPasswordError("Gagal mengubah password. Silakan coba lagi.");
+        setPasswordError("Gagal ngoba sandi. Silakan coba lagi.");
       }
     } finally {
       setIsChangingPassword(false);
@@ -267,7 +275,6 @@ const ProfileScreen = () => {
     setPasswordSuccess(false);
   };
 
-  // Fungsi untuk menampilkan modal share
   const handleShowShareModal = () => {
     const isMilestone = shareMilestones.includes(streakCount);
 
@@ -279,7 +286,6 @@ const ProfileScreen = () => {
     setShareModalVisible(true);
   };
 
-  // Fungsi untuk melakukan share
   const handleShare = async () => {
     if (!shareViewRef.current) {
       Alert.alert("Error", "Tidak dapat mengambil gambar");
@@ -289,7 +295,6 @@ const ProfileScreen = () => {
     try {
       setIsSharing(true);
 
-      // Capture view as image
       const uri = await shareViewRef.current.capture();
       console.log("Captured URI:", uri);
 
@@ -311,7 +316,7 @@ const ProfileScreen = () => {
       if (Platform.OS === "ios") {
         // On iOS, we can use React Native's Share API with both message and URL
         const shareOptions = {
-          title: "Bagikan Statistik Belajar Saya",
+          title: "Bagi statistik ollena ajarrra se engko'",
           message: `Saya telah belajar Bahasa Carakan selama ${streakCount} hari berturut-turut dengan total waktu belajar ${formatTimeSpent(
             totalTimeSpent
           )}! #BelajarCarakan`,
@@ -330,7 +335,7 @@ const ProfileScreen = () => {
         } else {
           // Fallback to React Native's Share API
           const shareOptions = {
-            title: "Bagikan Statistik Belajar Saya",
+            title: "Bagi statistik ollena ajarrra se engko'",
             url: shareUri,
           };
 
@@ -374,7 +379,7 @@ const ProfileScreen = () => {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Waktu yang kamu habiskan</Text>
+          <Text style={styles.cardTitle}>Bakto se e patadha'</Text>
           <Text style={styles.timeText}>{formatTimeSpent(totalTimeSpent)}</Text>
         </View>
 
@@ -383,7 +388,7 @@ const ProfileScreen = () => {
             <Text style={styles.streakTitle}>Streak</Text>
             <View style={styles.streakActions}>
               <Text style={styles.streakCountText}>
-                Total: {streakCount} hari
+                Total: {streakCount} are
               </Text>
               <TouchableOpacity
                 style={styles.shareButton}
@@ -409,9 +414,7 @@ const ProfileScreen = () => {
             ))}
           </View>
           <View style={styles.progressContainer}>
-            <Text style={styles.progressText}>
-              progresmu bagus, teruslah belajar
-            </Text>
+            <Text style={styles.progressText}>Progressa ba'na bagus</Text>
           </View>
         </View>
 
@@ -422,7 +425,7 @@ const ProfileScreen = () => {
           <View style={styles.buttonContent}>
             <View style={styles.buttonLeft}>
               <Feather name="edit-3" size={24} color="#000" />
-              <Text style={styles.buttonText}>Ubah Password</Text>
+              <Text style={styles.buttonText}>Oba Sandi</Text>
             </View>
             <MaterialIcons name="chevron-right" size={24} color="#000" />
           </View>
@@ -435,7 +438,7 @@ const ProfileScreen = () => {
           <View style={styles.buttonContent}>
             <View style={styles.buttonLeft}>
               <Feather name="settings" size={24} color="#000" />
-              <Text style={styles.buttonText}>Pengaturan Lainnya</Text>
+              <Text style={styles.buttonText}>Pengaturan Laenna</Text>
             </View>
             <MaterialIcons name="chevron-right" size={24} color="#000" />
           </View>
@@ -459,11 +462,11 @@ const ProfileScreen = () => {
             onStartShouldSetResponder={() => true}
           >
             <Text style={styles.logoutInfoText}>
-              Jika kamu logout kamu{"\n"}
-              tidak akan kehilangan{"\n"}
-              progresmu, namun kamu{"\n"}
-              perlu melakukan login{"\n"}
-              kembali
+              Mon ba'na logout, ba'na{"\n"}
+              tak kera kaelangan {"\n"}
+              ollena ba'na, tape ba'na{"\n"}
+              kodhu a login {"\n"}
+              pole kaanguy bisa amaen aplikasina.
             </Text>
             <View style={{ height: 20 }} />
             <TouchableOpacity
@@ -493,7 +496,7 @@ const ProfileScreen = () => {
             onStartShouldSetResponder={() => true}
           >
             <View style={styles.passwordModalHeader}>
-              <Text style={styles.passwordModalTitle}>Ubah Password</Text>
+              <Text style={styles.passwordModalTitle}>Oba Sandi</Text>
               <TouchableOpacity onPress={closePasswordModal}>
                 <AntDesign name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -502,46 +505,82 @@ const ProfileScreen = () => {
             {passwordSuccess ? (
               <View style={styles.successContainer}>
                 <AntDesign name="checkcircle" size={60} color="#4CAF50" />
-                <Text style={styles.successText}>
-                  Password berhasil diubah!
-                </Text>
+                <Text style={styles.successText}>Sandi Mare e Oba</Text>
               </View>
             ) : (
               <>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Password Saat Ini</Text>
-                  <TextInput
-                    style={styles.input}
-                    secureTextEntry
-                    value={currentPassword}
-                    onChangeText={setCurrentPassword}
-                    placeholder="Masukkan password saat ini"
-                    placeholderTextColor="#999"
-                  />
+                  <Text style={styles.inputLabel}>Sandi Se Sateya</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      secureTextEntry={!showPassword}
+                      value={currentPassword}
+                      onChangeText={setCurrentPassword}
+                      placeholder="Sandi Se Sateya"
+                      placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                    >
+                      <Feather
+                        name={showPassword ? "eye-off" : "eye"}
+                        size={20}
+                        color="#555"
+                        style={{ marginLeft: 10 }}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Password Baru</Text>
-                  <TextInput
-                    style={styles.input}
-                    secureTextEntry
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    placeholder="Masukkan password baru"
-                    placeholderTextColor="#999"
-                  />
+                  <Text style={styles.inputLabel}>Sandi Se Anyar</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      secureTextEntry={!showNewPassword}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      placeholder="Maso'agi Sandi Se Anyar"
+                      placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      <Feather
+                        name={showNewPassword ? "eye-off" : "eye"}
+                        size={20}
+                        color="#555"
+                        style={{ marginLeft: 10 }}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Konfirmasi Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    secureTextEntry
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Konfirmasi password baru"
-                    placeholderTextColor="#999"
-                  />
+                  <Text style={styles.inputLabel}>Konfirmasi Sandi</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      secureTextEntry={!showConfirmPassword}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      placeholder="Konfirmasi Sandi Anyar"
+                      placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity
+                      onPress={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      <Feather
+                        name={showConfirmPassword ? "eye-off" : "eye"}
+                        size={20}
+                        color="#555"
+                        style={{ marginLeft: 10 }}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {passwordError ? (
@@ -557,7 +596,7 @@ const ProfileScreen = () => {
                     <ActivityIndicator color="#FFF" />
                   ) : (
                     <Text style={styles.changePasswordSubmitText}>
-                      Ubah Password
+                      Oba Sandi
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -584,9 +623,7 @@ const ProfileScreen = () => {
             onStartShouldSetResponder={() => true}
           >
             <View style={styles.shareModalHeader}>
-              <Text style={styles.shareModalTitle}>
-                Bagikan Statistik Belajar
-              </Text>
+              <Text style={styles.shareModalTitle}>Bagi Ollena Ajar</Text>
               <TouchableOpacity onPress={() => setShareModalVisible(false)}>
                 <AntDesign name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -612,19 +649,19 @@ const ProfileScreen = () => {
 
                   <View style={styles.shareStatsContainer}>
                     <View style={styles.shareStatColumn}>
-                      <Text style={styles.shareStatTitle}>STREAK BELAJAR</Text>
+                      <Text style={styles.shareStatTitle}>STREAK AJAR</Text>
                       <View style={styles.shareStreakCount}>
                         <Text style={styles.shareCountNumber}>
                           {streakCount}
                         </Text>
-                        <Text style={styles.shareDaysText}>HARI</Text>
+                        <Text style={styles.shareDaysText}>ARE</Text>
                       </View>
                     </View>
 
                     <View style={styles.shareStatDivider} />
 
                     <View style={styles.shareStatColumn}>
-                      <Text style={styles.shareStatTitle}>WAKTU BELAJAR</Text>
+                      <Text style={styles.shareStatTitle}>Bakto Ajar</Text>
                       <View style={styles.shareTimeContainer}>
                         <Image
                           source={require("../../assets/images/tampilan/icon/fire-on.png")}
@@ -637,10 +674,9 @@ const ProfileScreen = () => {
                     </View>
                   </View>
 
-                  {/* Bagian streak days */}
                   <View style={styles.shareStreakContainer}>
                     <Text style={styles.shareStreakSubtitle}>
-                      Riwayat Streak
+                      Ollena Streak
                     </Text>
                     <View style={styles.shareStreakDays}>
                       {displayedStreak.map((day, index) => (
@@ -662,7 +698,7 @@ const ProfileScreen = () => {
                   </View>
 
                   <Text style={styles.shareMessage}>
-                    Ayo belajar Bahasa Carakan bersama!
+                    Mayu Ajar Aksara Carakan
                   </Text>
                 </View>
               </View>
@@ -706,8 +742,8 @@ const ProfileScreen = () => {
               Belum Bisa Dibagikan
             </Text>
             <Text style={{ textAlign: "center", marginBottom: 20 }}>
-              Fitur bagikan akan aktif saat kamu mencapai streak 7, 30, 100,
-              atau 200 hari.
+              Fitur bagikan bakal aktif tempona ba'na ngaolle otaba dhapa ka
+              streak 7, 30, 100, otaba 200 are.
             </Text>
             <TouchableOpacity
               onPress={() => setShowMilestoneWarning(false)}
@@ -1189,6 +1225,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 10,
+    alignSelf: "center",
     textAlign: "center",
   },
   shareTimeContainer: {

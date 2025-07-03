@@ -1,4 +1,3 @@
-//gameB.tsx with Lives System and Life Deduction on Wrong Answer - Text Version
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -42,7 +41,6 @@ const NanMaenanGameScreen: React.FC = () => {
   const [gameCompleteModalVisible, setGameCompleteModalVisible] =
     useState(false);
 
-  // Lives system state
   const [livesInfo, setLivesInfo] = useState<LivesInfo>({
     lives: 0,
     maxLives: 5,
@@ -507,11 +505,11 @@ const NanMaenanGameScreen: React.FC = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.gameCompleteContainer}>
-            <Image
+            {/* <Image
               source={require("../../assets/images/tampilan/correctpopup.png")}
               style={styles.gameCompleteImage}
               resizeMode="contain"
-            />
+            /> */}
 
             <Text style={styles.gameCompleteTitle}>Selamat!</Text>
             <Text style={styles.gameCompleteText}>
@@ -681,7 +679,6 @@ const styles = StyleSheet.create({
     height: 20,
   },
 
-  // Start game container
   preGameContainer: {
     flex: 1,
     justifyContent: "center",

@@ -72,7 +72,7 @@ const DropTargetBox = React.forwardRef(
           <Text style={styles.targetLetterText}>{letter}</Text>
         </View>
       ) : (
-        <Text style={styles.dropHereText}>Letakkan di sini</Text>
+        <Text style={styles.dropHereText}>Saba' E Dinna'</Text>
       )}
     </View>
   )
@@ -110,7 +110,7 @@ const DragDropGameScreen = () => {
   const questions: Question[] = [
     {
       id: 1,
-      text: "acaca",
+      text: "Acaca",
       items: [
         { id: 101, letter: "ꦲ" },
         { id: 102, letter: "ꦕ" },

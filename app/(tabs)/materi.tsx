@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Audio } from "expo-av";
 
 const { width } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ interface ContoItem {
 interface PronounceItem {
   id: string;
   letter: string;
+  audio: any;
 }
 
 type StreakData = {
@@ -63,17 +65,17 @@ const sowaraData: SowaraItem[] = [
 const conto: ContoItem[] = [
   {
     id: "1",
-    text: "arapa",
+    text: "Arapa",
     imageSource: require("../../assets/images/tampilan/contoh/conto.png"),
   },
   {
     id: "2",
-    text: "nagara",
+    text: "Nagara",
     imageSource: require("../../assets/images/tampilan/contoh/conto2.png"),
   },
   {
     id: "3",
-    text: "kaca",
+    text: "Kaca",
     imageSource: require("../../assets/images/tampilan/contoh/conto3.png"),
   },
 ];
@@ -90,26 +92,26 @@ const mainImages = [
 //     imageSource: require("../../assets/images/tampilan/aksara/a.png"),
 //   }));
 const pronounceData: PronounceItem[] = [
-  { id: "1", letter: "ꦲ" },
-  { id: "2", letter: "ꦤ" },
-  { id: "3", letter: "ꦕ" },
-  { id: "4", letter: "ꦫ" },
-  { id: "5", letter: "ꦏ" },
-  { id: "6", letter: "ꦢ" },
-  { id: "7", letter: "ꦠ" },
-  { id: "8", letter: "ꦱ" },
-  { id: "9", letter: "ꦮ" },
-  { id: "10", letter: "ꦭ" },
-  { id: "11", letter: "ꦥ" },
-  { id: "12", letter: "ꦣ" },
-  { id: "13", letter: "ꦗ" },
-  { id: "14", letter: "ꦪ" },
-  { id: "15", letter: "ꦚ" },
-  { id: "16", letter: "ꦩ" },
-  { id: "17", letter: "ꦒ" },
-  { id: "18", letter: "ꦧ" },
-  { id: "19", letter: "ꦛ" },
-  { id: "20", letter: "ꦔ" },
+  { id: "1", letter: "ꦲ", audio: require("../../assets/sound/a.mp3") },
+  { id: "2", letter: "ꦤ", audio: require("../../assets/sound/na.mp3") },
+  { id: "6", letter: "ꦢ", audio: require("../../assets/sound/da.mp3") },
+  { id: "3", letter: "ꦕ", audio: require("../../assets/sound/ca.mp3") },
+  { id: "4", letter: "ꦫ", audio: require("../../assets/sound/ra.mp3") },
+  { id: "5", letter: "ꦏ", audio: require("../../assets/sound/ka.mp3") },
+  { id: "7", letter: "ꦠ", audio: require("../../assets/sound/ta.mp3") },
+  { id: "9", letter: "ꦮ", audio: require("../../assets/sound/wa.mp3") },
+  { id: "8", letter: "ꦱ", audio: require("../../assets/sound/sa.mp3") },
+  { id: "10", letter: "ꦭ", audio: require("../../assets/sound/la.mp3") },
+  { id: "11", letter: "ꦥ", audio: require("../../assets/sound/pa.mp3") },
+  { id: "12", letter: "ꦣ", audio: require("../../assets/sound/dha.mp3") },
+  { id: "13", letter: "ꦗ", audio: require("../../assets/sound/ja.mp3") },
+  { id: "14", letter: "ꦪ", audio: require("../../assets/sound/ya.mp3") },
+  { id: "15", letter: "ꦚ", audio: require("../../assets/sound/nya.mp3") },
+  { id: "16", letter: "ꦩ", audio: require("../../assets/sound/ma.mp3") },
+  { id: "17", letter: "ꦒ", audio: require("../../assets/sound/ga.mp3") },
+  { id: "18", letter: "ꦧ", audio: require("../../assets/sound/ba.mp3") },
+  { id: "19", letter: "ꦛ", audio: require("../../assets/sound/tha.mp3") },
+  { id: "20", letter: "ꦔ", audio: require("../../assets/sound/nga.mp3") },
 ];
 
 const CarakanApp = () => {
@@ -118,7 +120,7 @@ const CarakanApp = () => {
   const startTimeRef = useRef<Date | null>(null);
   const [timeSpentAlert, setTimeSpentAlert] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  // Pindahkan ke atas, di dalam komponen tapi di luar useEffect
+
   const hasShownStreakToday = async (): Promise<boolean> => {
     const shownDate = await AsyncStorage.getItem("streakShownDate");
     const today = new Date().toDateString();
@@ -130,6 +132,29 @@ const CarakanApp = () => {
     await AsyncStorage.setItem("streakShownDate", today);
   };
 
+  const playSound = async (audioSource: any) => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(audioSource);
+      await sound.setVolumeAsync(1.0);
+      await sound.playAsync();
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.warn("Error playing sound:", error);
+    }
+  };
+//   useEffect(() => {
+//   Audio.setAudioModeAsync({
+//     playsInSilentModeIOS: true,
+//     staysActiveInBackground: false,
+//     shouldDuckAndroid: true,
+//     playThroughEarpieceAndroid: false,
+//   });
+// }, []);
   useEffect(() => {
     startTimeRef.current = new Date();
     console.log("Started tracking time at:", startTimeRef.current);
@@ -282,11 +307,13 @@ const CarakanApp = () => {
   );
 
   const renderPronounceItem = ({ item }: { item: PronounceItem }) => (
-    <TouchableOpacity style={styles.pronounceItem}>
-      <Text style={styles.pronounceLetter   }>{item.letter}</Text>
+    <TouchableOpacity
+      style={styles.pronounceItem}
+      onPress={() => playSound(item.audio)}
+    >
+      <Text style={styles.pronounceLetter}>{item.letter}</Text>
     </TouchableOpacity>
   );
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -387,7 +414,7 @@ const CarakanApp = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>sowara aksara</Text>
+              <Text style={styles.modalTitle}>Sowara Aksara</Text>
               <TouchableOpacity
                 onPress={() => setPronounceModalVisible(false)}
                 style={styles.closeButton}
@@ -398,7 +425,7 @@ const CarakanApp = () => {
 
             <View style={styles.modalBody}>
               <Text style={styles.pronounceTitle}>
-                pece' kaangguy{"\n"}ngeding agi
+                Pece' kaangguy{"\n"}ngedingagi
               </Text>
 
               <FlatList
@@ -423,7 +450,7 @@ const CarakanApp = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.streakModalContainer}>
             <View style={styles.streakModalHeader}>
-              <Text style={styles.streakModalTitle}>🔥 Streak Aktif!</Text>
+              <Text style={styles.streakModalTitle}>Streak Odhi'!</Text>
               <TouchableOpacity
                 onPress={() => setTimeSpentAlert(false)}
                 style={styles.closeButton}
@@ -438,8 +465,8 @@ const CarakanApp = () => {
                 style={styles.streakIcon}
               />
               <Text style={styles.streakMessage}>
-                Selamat! Anda telah belajar selama 1 menit.{"\n"}
-                Streak hari ini sudah aktif!
+                Kalangkong, ba'na la ajar sa'abiddha 1 menit.{"\n"}
+                Streak are sateya la aktif!
               </Text>
 
               <TouchableOpacity
@@ -568,6 +595,9 @@ const styles = StyleSheet.create({
   },
 
   sowaraCard: {
+    marginRight: 12,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "white",
     borderRadius: 16,
     padding: 20,
@@ -643,7 +673,7 @@ const styles = StyleSheet.create({
     borderColor: "#000000",
   },
   contoImageBox: {
-    width: 80,
+    width: 180,
     height: 50,
     borderRadius: 25,
     backgroundColor: "#7E80D8",

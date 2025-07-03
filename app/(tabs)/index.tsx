@@ -42,7 +42,7 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     if (!username || !password) {
-      showErrorModal('Error', 'Silakan isi semua field');
+      showErrorModal("Salah", "Esse'e kakabbih kotakna");
       return;
     }
 
@@ -73,7 +73,7 @@ const LoginScreen = () => {
     } catch (error: any) {
       console.error('Login error:', error);
       
-      let errorMessage = 'Username atau password salah';
+      let errorMessage = 'Email otaba sandi salah';
       
       if (error.code) {
         switch (error.code) {
@@ -105,18 +105,18 @@ const LoginScreen = () => {
 
   const handleSignUp = async () => {
     if (!username || !password) {
-      showErrorModal('Error', 'Silakan isi semua field');
+      showErrorModal("Salah", "Esse'e kakabbih kotak");
       return;
     }
 
     if (password.length < 6) {
-      showErrorModal('Error', 'Password harus minimal 6 karakter');
+      showErrorModal("Salah", "Sandi saenja'na kodhu paleng sakoni' 6 huruf");
       return;
     }
 
     const emailToUse = isSignUp && email ? email : `${username}@example.com`;
     if (!emailToUse.includes('@')) {
-      showErrorModal('Error', 'Format email tidak valid');
+      showErrorModal("Salah", "Email ta' teppa'");
       return;
     }
 
@@ -144,7 +144,7 @@ const LoginScreen = () => {
       if (error.code) {
         switch (error.code) {
           case 'auth/email-already-in-use':
-            errorMessage = 'Email sudah digunakan';
+            errorMessage = 'Email la eangguy';
             break;
           case 'auth/invalid-email':
             errorMessage = 'Format email tidak valid';
@@ -229,7 +229,7 @@ const LoginScreen = () => {
 
       <View style={styles.card}>
         <Text style={styles.headerText}>
-          {isSignUp ? 'Daftar Akun Baru' : 'Login'}
+          {isSignUp ? 'Daftar Akun Anyar' : 'Login'}
         </Text>
         
         <View style={styles.inputContainer}>
@@ -241,7 +241,7 @@ const LoginScreen = () => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder={isSignUp ? "nyama" : "nyama atau email"}
+            placeholder={isSignUp ? "Nyama" : "Nyama"}
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -277,7 +277,7 @@ const LoginScreen = () => {
           
           <TextInput
             style={styles.input}
-            placeholder="password"
+            placeholder="Sandi"
             secureTextEntry={!showPassword} 
             value={password}
             onChangeText={setPassword}
@@ -297,7 +297,7 @@ const LoginScreen = () => {
 
         {!isSignUp && (
           <Text style={styles.loginTip}>
-            Gunakan email lengkap untuk login jika sudah terdaftar
+            Ngangguy email kaangguy login mon la terdaftar
           </Text>
         )}
 
@@ -310,7 +310,7 @@ const LoginScreen = () => {
             <ActivityIndicator color="#000000" size="small" />
           ) : (
             <Text style={styles.loginButtonText}>
-              {isSignUp ? 'Daftar' : 'mayu ajer'}
+              {isSignUp ? 'Daftar' : 'Mayu Ajer'}
             </Text>
           )}
         </TouchableOpacity>
@@ -320,20 +320,12 @@ const LoginScreen = () => {
           style={styles.switchModeContainer}
         >
           <Text style={styles.switchModeText}>
-            {isSignUp ? 'Sudah punya akun? Login' : 'Belum punya akun? Daftar'}
+            {isSignUp ? "La andhi'akun? Login" : "Gi' ta' andhi' akun?"}
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.separator}>otaba</Text>
-
-        <TouchableOpacity style={styles.googleButton}>
-          <Image 
-            style={styles.googleLogo}
-          />
-        </TouchableOpacity>
       </View>
 
-      {/* Error Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -385,7 +377,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoImage: {
-    width: 150,
+    width: 350,
     height: 150,
   },
   headerText: {
