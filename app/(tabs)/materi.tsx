@@ -52,10 +52,10 @@ const sowaraData: SowaraItem[] = [
     id: "2",
     imageSource: require("../../assets/images/tampilan/aksara/na.png"),
   },
-  {
-    id: "3",
-    imageSource: require("../../assets/images/tampilan/aksara/ca.png"),
-  },
+  // {
+  //   id: "3",
+  //   imageSource: require("../../assets/images/tampilan/aksara/ca.png"),
+  // },
   {
     id: "4",
     imageSource: null,
@@ -85,22 +85,16 @@ const mainImages = [
   require("../../assets/images/tampilan/pangangguy.png"),
 ];
 
-// const pronounceData: PronounceItem[] = Array(20)
-//   .fill(null)
-//   .map((_, index) => ({
-//     id: index.toString(),
-//     imageSource: require("../../assets/images/tampilan/aksara/a.png"),
-//   }));
 const pronounceData: PronounceItem[] = [
   { id: "1", letter: "ꦲ", audio: require("../../assets/sound/a.mp3") },
   { id: "2", letter: "ꦤ", audio: require("../../assets/sound/na.mp3") },
-  { id: "6", letter: "ꦢ", audio: require("../../assets/sound/da.mp3") },
   { id: "3", letter: "ꦕ", audio: require("../../assets/sound/ca.mp3") },
   { id: "4", letter: "ꦫ", audio: require("../../assets/sound/ra.mp3") },
   { id: "5", letter: "ꦏ", audio: require("../../assets/sound/ka.mp3") },
+  { id: "6", letter: "ꦢ", audio: require("../../assets/sound/da.mp3") },
   { id: "7", letter: "ꦠ", audio: require("../../assets/sound/ta.mp3") },
-  { id: "9", letter: "ꦮ", audio: require("../../assets/sound/wa.mp3") },
   { id: "8", letter: "ꦱ", audio: require("../../assets/sound/sa.mp3") },
+  { id: "9", letter: "ꦮ", audio: require("../../assets/sound/wa.mp3") },
   { id: "10", letter: "ꦭ", audio: require("../../assets/sound/la.mp3") },
   { id: "11", letter: "ꦥ", audio: require("../../assets/sound/pa.mp3") },
   { id: "12", letter: "ꦣ", audio: require("../../assets/sound/dha.mp3") },
@@ -147,14 +141,14 @@ const CarakanApp = () => {
       console.warn("Error playing sound:", error);
     }
   };
-//   useEffect(() => {
-//   Audio.setAudioModeAsync({
-//     playsInSilentModeIOS: true,
-//     staysActiveInBackground: false,
-//     shouldDuckAndroid: true,
-//     playThroughEarpieceAndroid: false,
-//   });
-// }, []);
+  //   useEffect(() => {
+  //   Audio.setAudioModeAsync({
+  //     playsInSilentModeIOS: true,
+  //     staysActiveInBackground: false,
+  //     shouldDuckAndroid: true,
+  //     playThroughEarpieceAndroid: false,
+  //   });
+  // }, []);
   useEffect(() => {
     startTimeRef.current = new Date();
     console.log("Started tracking time at:", startTimeRef.current);

@@ -14,6 +14,9 @@ import { useRouter } from "expo-router";
 import LivesDisplay from "../../components/LivesDisplay";
 import NoLivesModal from "../../components/NoLivesModal";
 import livesManager, { LivesInfo } from "../../utils/livesManager";
+import { Audio } from "expo-av";
+import { BackHandler } from "react-native";
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -21,6 +24,7 @@ interface AksaraOption {
   id: number;
   text: string;
   letter: string;
+
   isCorrect: boolean;
 }
 
@@ -28,6 +32,7 @@ interface Question {
   id: number;
   questionText: string;
   incompleteWord: string;
+  latinWord: string;
   options: AksaraOption[];
 }
 
@@ -53,8 +58,9 @@ const NanMaenanGameScreen: React.FC = () => {
   const questions: Question[] = [
     {
       id: 1,
-      questionText: "Lengkapi kata berikut:",
+      questionText: "Lengkapi oca' e baba rea:",
       incompleteWord: "ꦲꦤ_",
+      latinWord: "Anapa",
       options: [
         {
           id: 1,
@@ -86,6 +92,7 @@ const NanMaenanGameScreen: React.FC = () => {
       id: 2,
       questionText: "Lengkapi kata berikut:",
       incompleteWord: "ꦩ_ꦤ",
+      latinWord: "Macana",
       options: [
         {
           id: 1,
@@ -117,6 +124,7 @@ const NanMaenanGameScreen: React.FC = () => {
       id: 3,
       questionText: "Lengkapi kata berikut:",
       incompleteWord: "_ꦥꦤ",
+      latinWord: "Sapana",
       options: [
         {
           id: 1,
@@ -148,6 +156,7 @@ const NanMaenanGameScreen: React.FC = () => {
       id: 4,
       questionText: "Lengkapi kata berikut:",
       incompleteWord: "_ꦩꦤ",
+      latinWord: "Nyamana",
       options: [
         {
           id: 1,
@@ -179,6 +188,7 @@ const NanMaenanGameScreen: React.FC = () => {
       id: 5,
       questionText: "Lengkapi kata berikut:",
       incompleteWord: "ꦚ_ꦤ",
+      latinWord: "Nyatana",
       options: [
         {
           id: 1,
@@ -209,6 +219,20 @@ const NanMaenanGameScreen: React.FC = () => {
   ];
 
   useEffect(() => {
+    const backAction = () => {
+      stopBackgroundMusic(); 
+      return false; 
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); 
+  }, []);
+
+  useEffect(() => {
     const checkLives = async () => {
       const info = await livesManager.initialize();
       setLivesInfo(info);
@@ -226,6 +250,7 @@ const NanMaenanGameScreen: React.FC = () => {
       return;
     }
 
+    await playBackgroundMusic();
     setGameStarted(true);
     setCurrentQuestionIndex(0);
     setCorrectAnswers(0);
@@ -321,6 +346,7 @@ const NanMaenanGameScreen: React.FC = () => {
     }
 
     setGameCompleteModalVisible(false);
+    await stopBackgroundMusic();
     router.push("/mainmenu");
   };
 
@@ -330,10 +356,45 @@ const NanMaenanGameScreen: React.FC = () => {
 
   const handleNoLivesGoHome = () => {
     setShowNoLivesModal(false);
+    stopBackgroundMusic();
     router.push("/mainmenu");
   };
 
   const currentQuestion = questions[currentQuestionIndex];
+  const soundRef = React.useRef<Audio.Sound | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  const playBackgroundMusic = async () => {
+    if (isMusicPlaying) return;
+
+    const { sound } = await Audio.Sound.createAsync(
+      require("../../assets/music/GameBacksound.mp3"),
+      {
+        shouldPlay: true,
+        isLooping: true,
+        volume: 0.5,
+      }
+    );
+
+    soundRef.current = sound;
+    await sound.playAsync();
+    setIsMusicPlaying(true);
+  };
+
+  const stopBackgroundMusic = async () => {
+    if (soundRef.current) {
+      await soundRef.current.stopAsync();
+      await soundRef.current.unloadAsync();
+      soundRef.current = null;
+      setIsMusicPlaying(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -362,11 +423,6 @@ const NanMaenanGameScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.gameTitle}>Nan Maenan</Text>
-        <Image
-          source={require("../../assets/images/tampilan/AstronoutGameB.png")}
-          style={styles.instructionImage}
-          resizeMode="contain"
-        />
 
         {!gameStarted ? (
           <View style={styles.preGameContainer}>
@@ -379,18 +435,15 @@ const NanMaenanGameScreen: React.FC = () => {
               disabled={livesInfo.lives <= 0}
             >
               <Text style={styles.startButtonText}>
-                Mulai Permainan {livesInfo.lives <= 0 ? "(Nyawa Habis)" : ""}
+                Molai Permainan {livesInfo.lives <= 0 ? "(Nyaba Tadha')" : ""}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.startButton, // gunakan startButton agar width sama
-                styles.menuButton,
-              ]}
+              style={[styles.startButton, styles.menuButton]}
               onPress={() => router.push("/mainmenu")}
             >
-              <Text style={styles.menuButtonText}>    Menu Utama    </Text>
+              <Text style={styles.menuButtonText}> Abali ka Menu Utama </Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -400,16 +453,19 @@ const NanMaenanGameScreen: React.FC = () => {
                 <Text style={styles.questionText}>
                   {currentQuestion.questionText}
                 </Text>
+                <Text style={styles.latinText}>
+                  {currentQuestion.latinWord}
+                </Text>
                 <Text style={styles.incompleteWord}>
                   {currentQuestion.incompleteWord}
                 </Text>
               </View>
-              <Text style={styles.aksaraLabel}>Isilah aksara yang hilang</Text>
+              <Text style={styles.aksaraLabel}>Esse'e asksara se elang</Text>
             </View>
 
             <View style={styles.symbolGridContainer}>
               <Text style={styles.symbolGridTitle}>
-                Pilih aksara yang tepat:
+                Pele aksara se bender:
               </Text>
               <View style={styles.symbolGrid}>
                 {[
@@ -435,6 +491,17 @@ const NanMaenanGameScreen: React.FC = () => {
                   </View>
                 ))}
               </View>
+              <TouchableOpacity
+                style={styles.bottomMenuButton}
+                onPress={() => {
+                  stopBackgroundMusic();
+                  router.push("/mainmenu");
+                }}
+              >
+                <Text style={styles.bottomMenuButtonText}>
+                  Abali ka Menu Utama
+                </Text>
+              </TouchableOpacity>
             </View>
           </>
         )}
@@ -473,15 +540,15 @@ const NanMaenanGameScreen: React.FC = () => {
                 isAnswerCorrect ? styles.correctText : styles.incorrectText,
               ]}
             >
-              {isAnswerCorrect ? "Benar!" : "Salah!"}
+              {isAnswerCorrect ? "Teppa'!" : "Salah!"}
             </Text>
 
             <Text style={styles.modalDetailText}>
               {isAnswerCorrect
                 ? currentQuestionIndex < questions.length - 1
-                  ? "Lanjut ke soal berikutnya."
-                  : "Ini soal terakhir!"
-                : `Nyawa berkurang 1. Nyawa tersisa: ${livesInfo.lives}\nSilakan coba lagi.`}
+                  ? "Terros ka soal saterrossa."
+                  : "Areya soal dibudina!"
+                : `Nyaba a korang 1. Nyaba a kare: ${livesInfo.lives}\nEatore ulang.`}
             </Text>
 
             <TouchableOpacity
@@ -491,7 +558,7 @@ const NanMaenanGameScreen: React.FC = () => {
               ]}
               onPress={closeAlert}
             >
-              <Text style={styles.modalButtonText}>OK</Text>
+              <Text style={styles.modalButtonText}>Iya</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -511,12 +578,12 @@ const NanMaenanGameScreen: React.FC = () => {
               resizeMode="contain"
             /> */}
 
-            <Text style={styles.gameCompleteTitle}>Selamat!</Text>
+            <Text style={styles.gameCompleteTitle}>Salamet!</Text>
             <Text style={styles.gameCompleteText}>
-              Anda telah menyelesaikan semua soal dengan {correctAnswers}{" "}
-              jawaban benar dari {questions.length} soal.
+              Ba'na la ma mare kakabbih soal dengan {correctAnswers} jawaban
+              teppa' dari {questions.length} soal.
               {correctAnswers >= Math.floor(questions.length * 0.8) &&
-                "\n\nAnda mendapatkan bonus nyawa tambahan!"}
+                "\n\nBa'na olle bonus tambaan nyaba!"}
             </Text>
 
             <View style={styles.gameCompleteButtons}>
@@ -524,12 +591,15 @@ const NanMaenanGameScreen: React.FC = () => {
                 style={[styles.gameCompleteButton, styles.restartButton]}
                 onPress={restartGame}
               >
-                <Text style={styles.gameCompleteButtonText}>Main Lagi</Text>
+                <Text style={styles.gameCompleteButtonText}>Amain Pole</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.gameCompleteButton]}
-                onPress={completeGameWithReward}
+                style={[styles.gameCompleteButton, styles.menuButton]}
+                onPress={async () => {
+                  await stopBackgroundMusic();
+                  completeGameWithReward();
+                }}
               >
                 <Text style={styles.gameCompleteButtonText}>Menu Utama</Text>
               </TouchableOpacity>
@@ -546,11 +616,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-  // safeArea: {
-  //   flex: 1,
-  //   backgroundColor: "white",
-  //   alignItems: "center",
-  // },
   scrollContent: {
     alignItems: "center",
     paddingBottom: 20,
@@ -602,6 +667,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     marginBottom: 10,
+  },
+  latinText: {
+    fontSize: 18,
+    color: "white",
+    fontStyle: "italic",
+    textAlign: "center",
   },
   questionText: {
     fontSize: 18,
@@ -684,6 +755,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    width: "80%",
   },
   preGameTitle: {
     fontSize: 24,
@@ -707,19 +779,7 @@ const styles = StyleSheet.create({
     height: 120,
     marginRight: 10,
   },
-  speechBubble: {
-    backgroundColor: "#F7DA30",
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#000",
-    maxWidth: 200,
-  },
-  speechText: {
-    color: "#000",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
+
   startButton: {
     backgroundColor: "#F7DA30",
     paddingVertical: 14,
@@ -728,7 +788,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#1B4D89",
     marginBottom: 10,
-    width: "80%",
+    width: "100%",
     alignItems: "center",
   },
   disabledButton: {
@@ -743,6 +803,7 @@ const styles = StyleSheet.create({
   menuButton: {
     backgroundColor: "#1E3A8A",
     borderColor: "#4D5BD1",
+    width: "100%",
   },
   menuButtonText: {
     fontSize: 16,
@@ -860,6 +921,20 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  bottomMenuButton: {
+    marginTop: 20,
+    backgroundColor: "#1E3A8A",
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#4D5BD1",
+    alignItems: "center",
+  },
+  bottomMenuButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
   },
 });
 

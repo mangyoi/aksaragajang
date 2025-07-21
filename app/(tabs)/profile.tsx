@@ -298,7 +298,6 @@ const ProfileScreen = () => {
       const uri = await shareViewRef.current.capture();
       console.log("Captured URI:", uri);
 
-      // For Android, we need to save to a temporary file location that other apps can access
       let shareUri = uri;
 
       if (Platform.OS === "android") {
@@ -312,9 +311,7 @@ const ProfileScreen = () => {
         shareUri = tempFilePath;
       }
 
-      // Share image based on platform
       if (Platform.OS === "ios") {
-        // On iOS, we can use React Native's Share API with both message and URL
         const shareOptions = {
           title: "Bagi statistik ollena ajarrra se engko'",
           message: `Saya telah belajar Bahasa Carakan selama ${streakCount} hari berturut-turut dengan total waktu belajar ${formatTimeSpent(
@@ -325,15 +322,12 @@ const ProfileScreen = () => {
 
         await Share.share(shareOptions);
       } else if (Platform.OS === "android") {
-        // On Android, if both message and URL are provided, only the URL will be used
-        // So we'll use expo-sharing which handles file sharing better
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(shareUri, {
             mimeType: "image/jpeg",
             dialogTitle: "Bagikan Statistik Belajar Saya",
           });
         } else {
-          // Fallback to React Native's Share API
           const shareOptions = {
             title: "Bagi statistik ollena ajarrra se engko'",
             url: shareUri,
@@ -445,7 +439,6 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal Logout */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -479,7 +472,6 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Modal Change Password */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -629,7 +621,6 @@ const ProfileScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Konten yang akan diambil screenshot */}
             <ViewShot
               ref={shareViewRef}
               options={{ format: "jpg", quality: 0.9 }}
@@ -763,21 +754,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  // topBackButton: {
-  //   position: "absolute",
-  //   top: 18,
-  //   left: 18,
-  //   zIndex: 10,
-  //   backgroundColor: "#FFF",
-  //   borderRadius: 22,
-  //   width: 44,
-  //   height: 44,
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   borderWidth: 2,
-  //   borderColor: "#7E80D8",
-  //   elevation: 3,
-  // },
   backButtonContainer: {
     position: "absolute",
     top: 18,
@@ -1067,7 +1043,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
 
-  // Style untuk modal Share Streak
   shareModalContent: {
     backgroundColor: "#FFF",
     borderRadius: 20,

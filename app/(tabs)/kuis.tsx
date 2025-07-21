@@ -8,7 +8,7 @@ import {
   Image, 
   ScrollView
 } from 'react-native';
-import { useRouter } from 'expo-router'; // Import useRouter
+import { useRouter } from 'expo-router'; 
 
 interface Answer {
   id: number;
@@ -57,7 +57,7 @@ const QuizScreen: React.FC = () => {
     },
     {
       id: 3,
-      carakanText: 'ꦤ꧀ꦪꦩꦤ',
+      carakanText: 'ꦚꦩꦤ',
       answers: [
         { id: 1, text: 'Nyamana' },
         { id: 2, text: 'Sapana' },
@@ -207,7 +207,7 @@ const QuizScreen: React.FC = () => {
         </View>
         
         <View style={styles.resultsContainer}>
-          <Text style={styles.resultsTitle}>Hasil Kuis</Text>
+          <Text style={styles.resultsTitle}>Hasel Kuis</Text>
           <Text style={styles.scoreText}>Skor Anda: {score} dari {questions.length}</Text>
           
           <View style={styles.questionSummary}>
@@ -225,15 +225,15 @@ const QuizScreen: React.FC = () => {
             style={styles.restartButton}
             onPress={restartQuiz}
           >
-            <Text style={styles.restartButtonText}>Mulai Lagi</Text>
+            <Text style={styles.restartButtonText}>Molai Pole</Text>
           </TouchableOpacity>
           
-          {/* Tambahkan tombol untuk kembali ke menu utama */}
+
           <TouchableOpacity 
             style={styles.mainMenuButton}
             onPress={goToMainMenu}
           >
-            <Text style={styles.mainMenuButtonText}>Kembali ke Menu Utama</Text>
+            <Text style={styles.mainMenuButtonText}>Abali ka Menu Utama</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -292,7 +292,7 @@ const QuizScreen: React.FC = () => {
           onPress={handlePrevQuestion}
           disabled={currentQuestionIndex === 0}
         >
-          <Text style={styles.navButtonText}>Sebelumnya</Text>
+          <Text style={styles.navButtonText}>Sabelumma</Text>
         </TouchableOpacity>
 
         {currentQuestionIndex === questions.length - 1 ? (
@@ -301,14 +301,14 @@ const QuizScreen: React.FC = () => {
             onPress={calculateScore}
             disabled={!allQuestionsAnswered()}
           >
-            <Text style={styles.submitButtonText}>Selesai</Text>
+            <Text style={styles.submitButtonText}>Mare</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity 
             style={styles.navButton}
             onPress={handleNextQuestion}
           >
-            <Text style={styles.navButtonText}>Selanjutnya</Text>
+            <Text style={styles.navButtonText}>Sateroorssa</Text>
           </TouchableOpacity>
         )}
       </View>

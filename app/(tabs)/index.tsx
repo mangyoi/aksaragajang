@@ -55,7 +55,7 @@ const LoginScreen = () => {
           streak: 1,
           lastLogin: new Date().toDateString()
         }));
-        router.push('/mainmenu');
+        router.replace('/mainmenu');
         setIsLoading(false);
         return;
       }
@@ -241,7 +241,7 @@ const LoginScreen = () => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder={isSignUp ? "Nyama" : "Nyama"}
+            placeholder={isSignUp ? "Nyama" : "Email"}
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -448,6 +448,8 @@ const styles = StyleSheet.create({
   switchModeText: {
     color: '#7B7EDE',
     fontSize: 14,
+    // justifyContent: 'center',
+    textAlign: 'center',
   },
   separator: {
     marginVertical: 15,

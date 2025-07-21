@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   Image,
   TouchableOpacity,
   Dimensions,
-  Alert,
   Modal,
 } from "react-native";
 import Animated, {
@@ -28,6 +26,9 @@ import LivesDisplay from "../../components/LivesDisplay";
 import NoLivesModal from "../../components/NoLivesModal";
 import livesManager, { LivesInfo } from "../../utils/livesManager";
 import { InteractionManager } from "react-native";
+import { Audio } from "expo-av";
+import { BackHandler } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -99,14 +100,8 @@ const DragDropGameScreen = () => {
     isInitialized: false,
   });
   const [showNoLivesModal, setShowNoLivesModal] = useState(false);
+  const [shouldShowModal, setShouldShowModal] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-
-  const [feedbackModal, setFeedbackModal] = useState({
-    visible: false,
-    isCorrect: false,
-    message: "",
-  });
-
   const questions: Question[] = [
     {
       id: 1,
@@ -269,6 +264,30 @@ const DragDropGameScreen = () => {
   const hasMeasuredRef = useRef(false);
 
   const animatedValuesRef = useRef([]);
+//   useEffect(() => {
+//   if (showNoLivesModal) {
+//     const timeout = setTimeout(() => {
+//       setShouldShowModal(true);
+//     }, 200); // delay sedikit agar layout stabil
+//     return () => clearTimeout(timeout);
+//   } else {
+//     setShouldShowModal(false);
+//   }
+// }, [showNoLivesModal]);
+
+  useEffect(() => {
+    const backAction = () => {
+      stopBackgroundMusic();
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   useEffect(() => {
     const checkLives = async () => {
@@ -288,6 +307,7 @@ const DragDropGameScreen = () => {
       return;
     }
 
+    await playBackgroundMusic();
     setGameStarted(true);
     setCurrentQuestionIndex(0);
     initializeQuestion(0);
@@ -298,6 +318,7 @@ const DragDropGameScreen = () => {
   };
 
   const handleNoLivesGoHome = () => {
+    stopBackgroundMusic();
     setShowNoLivesModal(false);
     router.push("/mainmenu");
   };
@@ -349,12 +370,49 @@ const DragDropGameScreen = () => {
 
     InteractionManager.runAfterInteractions(() => {
       setTimeout(() => {
-        hasMeasuredRef.current = false; // just to be sure
+        hasMeasuredRef.current = false;
         requestAnimationFrame(() => {
           measureDropTargets();
         });
       }, 300);
     });
+  };
+
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  const playBackgroundMusic = async () => {
+    try {
+      if (isMusicPlaying) return;
+
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/music/GameBacksound.mp3"), // ← pastikan path benar
+        {
+          shouldPlay: true,
+          isLooping: true,
+          volume: 1.0,
+        }
+      );
+
+      soundRef.current = sound;
+      await sound.playAsync();
+      setIsMusicPlaying(true);
+    } catch (error) {
+      console.error("Gagal memutar musik:", error);
+    }
+  };
+
+  const stopBackgroundMusic = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+        setIsMusicPlaying(false);
+      }
+    } catch (error) {
+      console.error("Gagal menghentikan musik:", error);
+    }
   };
 
   useEffect(() => {
@@ -429,16 +487,6 @@ const DragDropGameScreen = () => {
     setIsMeasuring(false);
   };
 
-  useEffect(() => {
-    if (feedbackModal.visible) {
-      const modalDuration = allCorrect ? 2000 : 1500;
-      const timer = setTimeout(() => {
-        setFeedbackModal({ ...feedbackModal, visible: false });
-      }, modalDuration);
-      return () => clearTimeout(timer);
-    }
-  }, [feedbackModal.visible, allCorrect]);
-
   const checkAllCorrect = (updatedTargets: DropTarget[]) => {
     const isAllCorrect = updatedTargets.every(
       (target: DropTarget) => target.isCorrect === true
@@ -464,17 +512,6 @@ const DragDropGameScreen = () => {
 
         rewardPlayer();
       }
-
-      InteractionManager.runAfterInteractions(() => {
-        setFeedbackModal({
-          visible: true,
-          isCorrect: true,
-          message:
-            currentQuestionIndex < questions.length - 1
-              ? "Benar! Lanjutkan ke soal berikutnya."
-              : "Semua Benar! Anda telah menyelesaikan semua soal dan mendapatkan nyawa tambahan!",
-        });
-      });
     }
   };
 
@@ -504,14 +541,6 @@ const DragDropGameScreen = () => {
       setDropTargets(updatedTargets);
       setVisible(false);
       checkAllCorrect(updatedTargets);
-
-      InteractionManager.runAfterInteractions(() => {
-        setFeedbackModal({
-          visible: true,
-          isCorrect: true,
-          message: "",
-        });
-      });
     } else {
       runOnJS(resetPosition)();
 
@@ -519,28 +548,11 @@ const DragDropGameScreen = () => {
       const updatedInfo = await livesManager.getLivesInfo();
       setLivesInfo(updatedInfo);
 
-      InteractionManager.runAfterInteractions(() => {
-        setFeedbackModal({
-          visible: true,
-          isCorrect: false,
-          message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`,
-        });
-      });
-
       if (!stillHasLives || updatedInfo.lives <= 0) {
         setTimeout(() => {
-          setFeedbackModal({ visible: false });
           setShowNoLivesModal(true);
         }, 1500);
       }
-
-      // await reduceLife();
-
-      // setFeedbackModal({
-      //   visible: true,
-      //   isCorrect: false,
-      //   message: `Salah! Nyawa berkurang 1.\nNyawa tersisa: ${updatedInfo.lives}`,
-      // });
     }
   };
 
@@ -683,77 +695,10 @@ const DragDropGameScreen = () => {
     );
   };
 
-  const FeedbackModal = () => (
-    <Modal
-      transparent={true}
-      visible={feedbackModal.visible}
-      animationType="fade"
-      onRequestClose={() => {}}
-    >
-      <View style={styles.modalOverlay}>
-        <View
-          style={[
-            styles.modalContainer,
-            feedbackModal.isCorrect
-              ? styles.correctModalContainer
-              : styles.incorrectModalContainer,
-          ]}
-        >
-          <Image
-            source={
-              feedbackModal.isCorrect
-                ? require("../../assets/images/tampilan/correctpopup.png")
-                : require("../../assets/images/tampilan/wrongpopup.png")
-            }
-            style={styles.feedbackImage}
-            resizeMode="contain"
-          />
-
-          <Text
-            style={[
-              styles.modalMessageText,
-              feedbackModal.isCorrect
-                ? styles.correctMessageText
-                : styles.incorrectMessageText,
-            ]}
-          >
-            {feedbackModal.isCorrect ? "Benar!" : "Salah!"}
-          </Text>
-
-          {feedbackModal.message && (
-            <Text
-              style={[
-                styles.modalDetailText,
-                feedbackModal.isCorrect
-                  ? styles.correctMessageText
-                  : styles.incorrectMessageText,
-              ]}
-            >
-              {feedbackModal.message}
-            </Text>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
-
   const renderPreGameScreen = () => {
     return (
       <View style={styles.preGameContainer}>
-        {/* <Text style={styles.preGameTitle}>Carakan - Nan Maenan</Text> */}
-
-        <View style={styles.characterRow}>
-          {/* <View style={styles.speechBubble}>
-            <Text style={styles.speechText}>
-              cocok agi okara{"\n"}e baba reya
-            </Text>
-          </View> */}
-          <Image
-            source={require("../../assets/images/tampilan/AstronoutGameA.png")}
-            style={styles.astronautImage}
-            resizeMode="contain"
-          />
-        </View>
+        <Text style={styles.gameTitle}>Nan Maenan</Text>
 
         <TouchableOpacity
           style={[
@@ -764,15 +709,18 @@ const DragDropGameScreen = () => {
           disabled={livesInfo.lives <= 0}
         >
           <Text style={styles.startButtonText}>
-            Mulai Permainan {livesInfo.lives <= 0 ? "(Nyawa Habis)" : ""}
+            Molai Permainan {livesInfo.lives <= 0 ? "(Nyaba Tadha')" : ""}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.startButton, styles.menuButton]}
-          onPress={() => router.push("/mainmenu")}
+          onPress={() => {
+            stopBackgroundMusic();
+            router.push("/mainmenu");
+          }}
         >
-          <Text style={styles.menuButtonText}> Menu Utama </Text>
+          <Text style={styles.menuButtonText}> Abali ka Menu Utama </Text>
         </TouchableOpacity>
       </View>
     );
@@ -781,9 +729,9 @@ const DragDropGameScreen = () => {
   const renderGameCompletedScreen = () => {
     return (
       <View style={styles.completedContainer}>
-        <Text style={styles.completedTitle}>Permainan Selesai!</Text>
+        <Text style={styles.completedTitle}>Permainan Mare!</Text>
         <Text style={styles.completedSubtitle}>
-          Anda telah menyelesaikan semua soal dengan sempurna!
+          Ba'na la mamare kakabbih pertanyaan.
         </Text>
 
         <Image
@@ -792,19 +740,20 @@ const DragDropGameScreen = () => {
           resizeMode="contain"
         />
 
-        <Text style={styles.bonusText}>
-          Anda mendapatkan bonus nyawa tambahan!
-        </Text>
+        <Text style={styles.bonusText}>Ba'na olle tamba'an nyaba</Text>
 
         <TouchableOpacity style={styles.playAgainButton} onPress={startGame}>
-          <Text style={styles.playAgainButtonText}>Main Lagi</Text>
+          <Text style={styles.playAgainButtonText}>A Main Pole</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => router.push("/mainmenu")}
+          onPress={() => {
+            stopBackgroundMusic();
+            router.push("/mainmenu");
+          }}
         >
-          <Text style={styles.homeButtonText}>Kembali ke Menu Utama</Text>
+          <Text style={styles.homeButtonText}>Abali ke Menu Utama</Text>
         </TouchableOpacity>
       </View>
     );
@@ -813,6 +762,12 @@ const DragDropGameScreen = () => {
   useEffect(() => {
     return () => {
       cleanupAnimatedValues();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopBackgroundMusic();
     };
   }, []);
 
@@ -857,7 +812,7 @@ const DragDropGameScreen = () => {
             </View>
 
             <Text style={styles.dropTargetLabel}>
-              Tarik aksara dan letakkan di kotak di bawah ini:
+              Erset aksara ban saba' e kotak e baba rea
             </Text>
 
             <View style={styles.dropTargetRow}>
@@ -877,9 +832,7 @@ const DragDropGameScreen = () => {
             </View>
 
             <View style={styles.draggableContainer}>
-              <Text style={styles.draggableTitle}>
-                Aksara yang bisa ditarik:
-              </Text>
+              <Text style={styles.draggableTitle}>Aksara se bisa e tarek:</Text>
               <View style={styles.draggableItemsRow}>
                 {!isTransitioning &&
                   draggableItems.map((item) => (
@@ -897,22 +850,22 @@ const DragDropGameScreen = () => {
                 onPress={goToNextQuestion}
                 disabled={isTransitioning}
               >
-                <Text style={styles.nextButtonText}>
-                  Lanjut ke Soal Berikutnya
-                </Text>
+                <Text style={styles.nextButtonText}>Terros ka Soal Laenna</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
               style={styles.homeButton}
-              onPress={() => router.push("/mainmenu")}
+              onPress={() => {
+                stopBackgroundMusic();
+                router.push("/mainmenu");
+              }}
             >
-              <Text style={styles.homeButtonText}>Kembali ke Menu</Text>
+              <Text style={styles.homeButtonText}>Abali ke Menu</Text>
             </TouchableOpacity>
           </>
         )}
       </SafeAreaView>
-      <FeedbackModal />
     </GestureHandlerRootView>
   );
 };
@@ -951,6 +904,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1B4D89",
     marginBottom: 10,
+  },
+  preGameContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "80%",
   },
   instructionText: {
     fontSize: 16,
@@ -1067,7 +1026,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 10,
-    marginTop: "auto",
+    // marginTop: "auto",
     marginBottom: 30,
   },
   homeButtonText: {
@@ -1110,7 +1069,6 @@ const styles = StyleSheet.create({
     height: 175,
   },
 
-  // ...existing code...
   startButton: {
     backgroundColor: "#FFD700",
     borderColor: "#1B4D89",
@@ -1121,8 +1079,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     width: "80%",
     alignItems: "center",
-    alignSelf: "center", // tombol rata tengah
-    justifyContent: "center", // isi tombol rata tengah secara vertikal
+    alignSelf: "center",
+    justifyContent: "center",
   },
 
   startButtonText: {
@@ -1203,45 +1161,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    width: 220,
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 20,
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,
     borderWidth: 3,
   },
-  correctModalContainer: {
-    borderColor: "#4CAF50",
-    backgroundColor: "#E8F5E9",
-  },
-  incorrectModalContainer: {
-    borderColor: "#F44336",
-    backgroundColor: "#FFEBEE",
-  },
-  feedbackImage: {
-    width: 100,
-    height: 100,
-  },
-  modalMessageText: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  modalDetailText: {
-    marginTop: 5,
-    fontSize: 14,
-    textAlign: "center",
-    paddingHorizontal: 10,
-  },
-  correctMessageText: {
-    color: "#4CAF50",
-  },
-  incorrectMessageText: {
-    color: "#F44336",
-  },
+
 });
 
 export default DragDropGameScreen;

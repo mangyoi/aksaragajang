@@ -40,7 +40,7 @@ const NoLivesModal = ({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <Image 
-            source={require('../assets/images/tampilan/AstronoutGameA.png')}
+            source={require('../assets/images/tampilan/NoHeart.png')}
             style={styles.modalImage} 
             resizeMode="contain"
           />
