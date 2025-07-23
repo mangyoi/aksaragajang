@@ -28,7 +28,7 @@ import livesManager, { LivesInfo } from "../../utils/livesManager";
 import { InteractionManager } from "react-native";
 import { Audio } from "expo-av";
 import { BackHandler } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -264,16 +264,16 @@ const DragDropGameScreen = () => {
   const hasMeasuredRef = useRef(false);
 
   const animatedValuesRef = useRef([]);
-//   useEffect(() => {
-//   if (showNoLivesModal) {
-//     const timeout = setTimeout(() => {
-//       setShouldShowModal(true);
-//     }, 200); // delay sedikit agar layout stabil
-//     return () => clearTimeout(timeout);
-//   } else {
-//     setShouldShowModal(false);
-//   }
-// }, [showNoLivesModal]);
+  //   useEffect(() => {
+  //   if (showNoLivesModal) {
+  //     const timeout = setTimeout(() => {
+  //       setShouldShowModal(true);
+  //     }, 200); // delay sedikit agar layout stabil
+  //     return () => clearTimeout(timeout);
+  //   } else {
+  //     setShouldShowModal(false);
+  //   }
+  // }, [showNoLivesModal]);
 
   useEffect(() => {
     const backAction = () => {
@@ -1168,7 +1168,6 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 3,
   },
-
 });
 
 export default DragDropGameScreen;
