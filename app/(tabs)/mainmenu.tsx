@@ -10,10 +10,11 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { Dimensions } from "react-native";
 
 type StreakData = {
   streak: number;
@@ -30,6 +31,29 @@ const MainMenu = () => {
   const [userName, setUserName] = useState("");
   const [isStreakActive, setIsStreakActive] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const bannerRef = useRef<ScrollView>(null);
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const bannerImages = [
+    require("../../assets/images/tampilan/mainmenu.png"),
+    require("../../assets/images/tampilan/mainmenu2.png"),
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBannerIndex((prev) => (prev + 1) % bannerImages.length);
+    }, 3000); // auto scroll setiap 3 detik
+
+    return () => clearInterval(interval);
+  }, [bannerImages.length]);
+
+  useEffect(() => {
+    if (bannerRef.current) {
+      bannerRef.current.scrollTo({
+        x: bannerIndex * 400,
+        animated: true,
+      });
+    }
+  }, [bannerIndex]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -140,7 +164,6 @@ const MainMenu = () => {
             await saveStreakData(1, today, false);
           }
         } else {
-          // Check if user spent enough time in material today
           if (lastMaterialAccess && materialTimeSpent !== undefined) {
             const materialAccessDate = new Date(
               lastMaterialAccess
@@ -204,7 +227,10 @@ const MainMenu = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerRow}>
           <TouchableOpacity
             style={styles.integratedHeader}
@@ -227,7 +253,10 @@ const MainMenu = () => {
                 />
               </View>
               <View style={styles.profileIconContainer}>
-                <Feather name="user" size={24} color="#1B4D89" />
+                <Image
+                  source={require("../../assets/images/tampilan/icon/user.png")}
+                  style={{ width: 25, height: 25,  }}
+                />
               </View>
             </View>
           </TouchableOpacity>
@@ -244,10 +273,18 @@ const MainMenu = () => {
         </View>
 
         <View style={styles.titleContainer}>
-          <Image
-            source={require("../../assets/images/tampilan/mainmenu.png")}
-            style={styles.titleImage}
-          />
+          <ScrollView
+            ref={bannerRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={styles.bannerScroll}
+            contentContainerStyle={styles.bannerContent}
+          >
+            {bannerImages.map((img, idx) => (
+              <Image key={idx} source={img} style={styles.titleImage} />
+            ))}
+          </ScrollView>
         </View>
 
         <TouchableOpacity
@@ -332,6 +369,7 @@ const MainMenu = () => {
   );
 };
 
+const { width } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -341,6 +379,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
+
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -412,15 +451,25 @@ const styles = StyleSheet.create({
   profileIconContainer: {
     padding: 5,
   },
+  bannerScroll: {
+    width: width - 40,
+    alignSelf: "center",
+  },
+  bannerContent: {
+    alignItems: "center",
+  },
   titleContainer: {
     alignItems: "center",
     marginBottom: 30,
     marginTop: 20,
   },
   titleImage: {
-    width: 400,
-    height: 200,
-    resizeMode: "contain",
+    width: width - 40,
+    height: 240,
+    borderWidth: 4,
+    borderColor: "black",
+    borderRadius: 20,
+    resizeMode: "cover",
   },
   materiCard: {
     backgroundColor: "#F7DA30",

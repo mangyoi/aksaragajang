@@ -260,8 +260,10 @@ const MatchingGameScreen: React.FC = () => {
 
   useEffect(() => {
     const backAction = () => {
-      stopBackgroundMusic();
-      return false;
+      stopBackgroundMusic().then(() => {
+        router.push("/mainmenu"); 
+      });
+      return true; 
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -459,7 +461,6 @@ const MatchingGameScreen: React.FC = () => {
     setIsGameActive(true);
     setAllLevelsCompleted(false);
     setGameStarted(false);
-
   };
 
   const startGame = async () => {
@@ -471,7 +472,7 @@ const MatchingGameScreen: React.FC = () => {
 
     initializeLevel(0);
 
-    await playBackgroundMusic(); 
+    await playBackgroundMusic();
     initializeLevel(0);
   };
 

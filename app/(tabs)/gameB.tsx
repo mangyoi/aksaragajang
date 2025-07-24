@@ -17,7 +17,6 @@ import livesManager, { LivesInfo } from "../../utils/livesManager";
 import { Audio } from "expo-av";
 import { BackHandler } from "react-native";
 
-
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface AksaraOption {
@@ -220,8 +219,10 @@ const NanMaenanGameScreen: React.FC = () => {
 
   useEffect(() => {
     const backAction = () => {
-      stopBackgroundMusic(); 
-      return false; 
+      stopBackgroundMusic().then(() => {
+        router.push("/mainmenu"); 
+      });
+      return true; 
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -229,7 +230,7 @@ const NanMaenanGameScreen: React.FC = () => {
       backAction
     );
 
-    return () => backHandler.remove(); 
+    return () => backHandler.remove();
   }, []);
 
   useEffect(() => {
@@ -464,9 +465,7 @@ const NanMaenanGameScreen: React.FC = () => {
             </View>
 
             <View style={styles.symbolGridContainer}>
-              <Text style={styles.symbolGridTitle}>
-                Pele aksara se bender:
-              </Text>
+              <Text style={styles.symbolGridTitle}>Pele aksara se bender:</Text>
               <View style={styles.symbolGrid}>
                 {[
                   [currentQuestion.options[0], currentQuestion.options[1]],

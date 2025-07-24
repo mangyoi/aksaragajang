@@ -277,8 +277,10 @@ const DragDropGameScreen = () => {
 
   useEffect(() => {
     const backAction = () => {
-      stopBackgroundMusic();
-      return false;
+      stopBackgroundMusic().then(() => {
+        router.push("/mainmenu"); 
+      });
+      return true; 
     };
 
     const backHandler = BackHandler.addEventListener(

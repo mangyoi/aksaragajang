@@ -88,7 +88,7 @@ const ProfileScreen = () => {
     loadUserData();
   }, []);
 
-  // useEffect(() => { 
+  // useEffect(() => {
   //   if (__DEV__) {
   //     AsyncStorage.removeItem("lastSharedMilestone");
   //   }
@@ -362,10 +362,11 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.avatarSection}>
-          <View style={styles.avatarCircle}>
-            <Feather name="user" size={40} color="#3D3D8B" />
-          </View>
+        <View>
+          <Image
+            source={require("../../assets/images/tampilan/icon/user.png")}
+            style={{ width: 40, height: 40 }}
+          />
         </View>
 
         <View style={styles.greetingContainer}>
