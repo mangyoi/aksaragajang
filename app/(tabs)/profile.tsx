@@ -362,11 +362,13 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View>
-          <Image
-            source={require("../../assets/images/tampilan/icon/user.png")}
-            style={{ width: 40, height: 40 }}
-          />
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarCircle}>
+            <Image
+              source={require("../../assets/images/tampilan/icon/user.png")}
+              style={{ width: 70, height: 70 }}
+            />
+          </View>
         </View>
 
         <View style={styles.greetingContainer}>

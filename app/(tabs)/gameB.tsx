@@ -18,6 +18,8 @@ import { Audio } from "expo-av";
 import { BackHandler } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const GAME_KEY = "nanmaenangame";
+const manager = livesManager.getManager(GAME_KEY);
 
 interface AksaraOption {
   id: number;
@@ -220,9 +222,9 @@ const NanMaenanGameScreen: React.FC = () => {
   useEffect(() => {
     const backAction = () => {
       stopBackgroundMusic().then(() => {
-        router.push("/mainmenu"); 
+        router.push("/mainmenu");
       });
-      return true; 
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -235,7 +237,7 @@ const NanMaenanGameScreen: React.FC = () => {
 
   useEffect(() => {
     const checkLives = async () => {
-      const info = await livesManager.initialize();
+      const info = await manager.initialize();
       setLivesInfo(info);
     };
 
@@ -243,7 +245,7 @@ const NanMaenanGameScreen: React.FC = () => {
   }, []);
 
   const startGame = async () => {
-    const info = await livesManager.getLivesInfo();
+    const info = await manager.getInfo();
     setLivesInfo(info);
 
     if (info.lives <= 0) {
@@ -270,8 +272,8 @@ const NanMaenanGameScreen: React.FC = () => {
 
       if (!isCorrect) {
         const reduceLife = async () => {
-          const stillHasLives = await livesManager.useLife();
-          const updatedInfo = await livesManager.getLivesInfo();
+          const stillHasLives = await manager.useLife();
+          const updatedInfo = await manager.getInfo();
           setLivesInfo(updatedInfo);
 
           if (!stillHasLives || updatedInfo.lives <= 0) {
@@ -308,6 +310,10 @@ const NanMaenanGameScreen: React.FC = () => {
     }
   };
 
+  const handleStart = () => {
+    console.log("Mulai permainan ditekan");
+    setGameStarted(true);
+  };
   const handleOptionSelect = (optionId: number) => {
     if (!gameStarted) return;
     setSelectedOption(optionId);
@@ -324,7 +330,7 @@ const NanMaenanGameScreen: React.FC = () => {
   };
 
   const restartGame = async () => {
-    const info = await livesManager.getLivesInfo();
+    const info = await manager.getInfo();
     setLivesInfo(info);
 
     if (info.lives <= 0) {
@@ -341,8 +347,8 @@ const NanMaenanGameScreen: React.FC = () => {
 
   const completeGameWithReward = async () => {
     if (correctAnswers >= Math.floor(questions.length * 0.8)) {
-      await livesManager.addLife();
-      const updatedInfo = await livesManager.getLivesInfo();
+      await manager.addLife();
+      const updatedInfo = await manager.getInfo();
       setLivesInfo(updatedInfo);
     }
 
@@ -409,7 +415,7 @@ const NanMaenanGameScreen: React.FC = () => {
       </View>
 
       {/* Lives Display */}
-      <LivesDisplay onLivesUpdated={handleLivesUpdated} />
+      <LivesDisplay gameKey={GAME_KEY} onLivesUpdated={handleLivesUpdated} />
 
       {/* No Lives Modal */}
       <NoLivesModal

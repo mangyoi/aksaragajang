@@ -31,6 +31,8 @@ import { BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const GAME_KEY = "dragdrop";
+const manager = livesManager.getManager(GAME_KEY);
 
 interface DraggableItem {
   id: number;
@@ -293,7 +295,7 @@ const DragDropGameScreen = () => {
 
   useEffect(() => {
     const checkLives = async () => {
-      const info = await livesManager.initialize();
+      const info = await manager.initialize();
       setLivesInfo(info);
     };
 
@@ -301,7 +303,7 @@ const DragDropGameScreen = () => {
   }, []);
 
   const startGame = async () => {
-    const info = await livesManager.getLivesInfo();
+    const info = await manager.getInfo();
     setLivesInfo(info);
 
     if (info.lives <= 0) {
@@ -507,8 +509,8 @@ const DragDropGameScreen = () => {
         setGameCompleted(true);
 
         const rewardPlayer = async () => {
-          await livesManager.addLife();
-          const updatedInfo = await livesManager.getLivesInfo();
+          await manager.addLife();
+          const updatedInfo = await manager.getInfo();
           setLivesInfo(updatedInfo);
         };
 
@@ -546,8 +548,8 @@ const DragDropGameScreen = () => {
     } else {
       runOnJS(resetPosition)();
 
-      const stillHasLives = await livesManager.useLife();
-      const updatedInfo = await livesManager.getLivesInfo();
+      const stillHasLives = await manager.useLife();
+      const updatedInfo = await manager.getInfo();
       setLivesInfo(updatedInfo);
 
       if (!stillHasLives || updatedInfo.lives <= 0) {

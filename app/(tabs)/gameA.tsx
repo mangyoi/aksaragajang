@@ -120,6 +120,9 @@ const CustomModal: React.FC<CustomModalProps> = ({
   );
 };
 
+const GAME_KEY = "matchingGame";
+const manager = livesManager.getManager(GAME_KEY);
+
 const MatchingGameScreen: React.FC = () => {
   const router = useRouter();
   const isMounted = useRef(true);
@@ -261,9 +264,9 @@ const MatchingGameScreen: React.FC = () => {
   useEffect(() => {
     const backAction = () => {
       stopBackgroundMusic().then(() => {
-        router.push("/mainmenu"); 
+        router.push("/mainmenu");
       });
-      return true; 
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -289,13 +292,16 @@ const MatchingGameScreen: React.FC = () => {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
+      setIsModalVisible(false);
+      setShowLivesDeductionModal(false);
+
       stopBackgroundMusic();
     };
   }, []);
 
   useEffect(() => {
     const checkLives = async () => {
-      const info = await livesManager.initialize();
+      const info = await manager.initialize();
       setLivesInfo(info);
     };
 
@@ -355,8 +361,8 @@ const MatchingGameScreen: React.FC = () => {
     primaryButtonText: string,
     primaryButtonAction: () => void,
     secondaryButtonText?: string,
-    secondaryButtonAction?: () => void,
-    imageSource?: any
+    secondaryButtonAction?: () => void
+    // imageSource?: any
   ) => {
     if (!isMounted.current) return;
 
@@ -414,7 +420,7 @@ const MatchingGameScreen: React.FC = () => {
     if (!isMounted.current) return;
 
     if (levelIndex === 0 && !gameStarted) {
-      const info = await livesManager.getLivesInfo();
+      const info = await manager.getInfo();
       setLivesInfo(info);
 
       if (info.lives <= 0) {
@@ -460,7 +466,7 @@ const MatchingGameScreen: React.FC = () => {
     setTimeRemaining(level.timeLimit);
     setIsGameActive(true);
     setAllLevelsCompleted(false);
-    setGameStarted(false);
+    // setGameStarted(false);
   };
 
   const startGame = async () => {
@@ -468,17 +474,16 @@ const MatchingGameScreen: React.FC = () => {
 
     setCurrentLevelIndex(0);
     setAllLevelsCompleted(false);
-    setGameStarted(false);
+    setGameStarted(true);
 
     initializeLevel(0);
 
     await playBackgroundMusic();
-    initializeLevel(0);
   };
 
   const handleLevelComplete = async () => {
     setIsGameActive(false);
-    stopBackgroundMusic();
+    
 
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -510,17 +515,18 @@ const MatchingGameScreen: React.FC = () => {
           `Terros ka level ${nextLevelIndex + 1}`,
           handleNextLevel,
           undefined,
-          undefined,
-          require("../../assets/images/tampilan/AstronoutGameA.png")
+          undefined
+          // require("../../assets/images/tampilan/AstronoutGameA.png")
         );
       } else {
         setAllLevelsCompleted(true);
+        stopBackgroundMusic();
 
         const handleRestart = async () => {
           hideModal();
 
-          await livesManager.addLife();
-          const updatedInfo = await livesManager.getLivesInfo();
+          await manager.addLife();
+          const updatedInfo = await manager.getInfo();
           setLivesInfo(updatedInfo);
 
           setTimeout(() => {
@@ -536,7 +542,6 @@ const MatchingGameScreen: React.FC = () => {
           handleRestart,
           undefined,
           undefined
-          // require("../../assets/images/tampilan/AstronoutGameA.png")
         );
       }
     }, 500);
@@ -548,7 +553,7 @@ const MatchingGameScreen: React.FC = () => {
     if (!isMounted.current) return;
 
     // When game over, check lives status
-    const info = await livesManager.getLivesInfo();
+    const info = await manager.getInfo();
     setLivesInfo(info);
 
     setTimeout(() => {
@@ -579,8 +584,7 @@ const MatchingGameScreen: React.FC = () => {
         "Coba Pole",
         handleRetry,
         "Molai Dari Adha'",
-        handleRestartGame,
-        require("../../assets/images/tampilan/AstronoutGameA.png")
+        handleRestartGame
       );
     }, 50);
   };
@@ -625,8 +629,8 @@ const MatchingGameScreen: React.FC = () => {
       setSelectedItem(item);
 
       const reduceLife = async () => {
-        const stillHasLives = await livesManager.useLife();
-        const updatedInfo = await livesManager.getLivesInfo();
+        const stillHasLives = await manager.useLife();
+        const updatedInfo = await manager.getInfo();
         setLivesInfo(updatedInfo);
 
         setModalTitle("Jawaban Salah!");
@@ -707,7 +711,6 @@ const MatchingGameScreen: React.FC = () => {
     );
   };
 
-  // Show pre-game screen if not started yet
   const renderPreGameScreen = () => {
     return (
       <View style={styles.preGameContainer}>
@@ -715,7 +718,7 @@ const MatchingGameScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.startButton}
-          onPress={() => initializeLevel(0)}
+          onPress={startGame}
           disabled={livesInfo.lives <= 0}
         >
           <Text style={styles.startButtonText}>
@@ -732,6 +735,14 @@ const MatchingGameScreen: React.FC = () => {
       </View>
     );
   };
+
+  if (!livesInfo?.isInitialized) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ fontSize: 16 }}>Ngecek nyaba...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -777,7 +788,7 @@ const MatchingGameScreen: React.FC = () => {
       </View>
 
       {/* Lives Display */}
-      <LivesDisplay onLivesUpdated={handleLivesUpdated} />
+      <LivesDisplay gameKey={GAME_KEY} onLivesUpdated={handleLivesUpdated} />
 
       {!gameStarted ? (
         // Show pre-game screen

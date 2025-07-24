@@ -297,7 +297,7 @@ const LoginScreen = () => {
 
         {!isSignUp && (
           <Text style={styles.loginTip}>
-            Ngangguyyy email kaangguy login mon la terdaftar
+            Ngangguy email kaangguy login mon la terdaftar
           </Text>
         )}
 

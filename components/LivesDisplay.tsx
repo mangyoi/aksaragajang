@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, Image } from "react-native";
 import livesManager, { LivesInfo } from "../utils/livesManager";
 
 interface LivesDisplayProps {
+  gameKey: string;
   onLivesUpdated?: (info: LivesInfo) => void;
   livesInfo?: LivesInfo;
 }
 
 const LivesDisplay = ({
+  gameKey,
   onLivesUpdated,
   livesInfo: propLivesInfo,
 }: LivesDisplayProps) => {
@@ -27,7 +29,8 @@ const LivesDisplay = ({
     if (!propLivesInfo) {
       const initializeLives = async () => {
         try {
-          const info = await livesManager.initialize();
+          const manager = livesManager.getManager(gameKey);
+          const info = await manager.initialize();
 
           if (isMounted) {
             setInternalLivesInfo(info);
@@ -61,7 +64,8 @@ const LivesDisplay = ({
       interval = setInterval(async () => {
         try {
           if (!propLivesInfo) {
-            const updatedInfo = await livesManager.getLivesInfo();
+            const manager = livesManager.getManager(gameKey);
+            const updatedInfo = await manager.getInfo();
             setInternalLivesInfo(updatedInfo);
 
             if (updatedInfo.timeUntilNextLife > 0) {
@@ -74,7 +78,8 @@ const LivesDisplay = ({
               );
             } else {
               setTimeString("");
-              const refreshedInfo = await livesManager.initialize();
+              const manager = livesManager.getManager(gameKey);
+              const refreshedInfo = await manager.initialize();
               setInternalLivesInfo(refreshedInfo);
               if (onLivesUpdated) {
                 onLivesUpdated(refreshedInfo);
