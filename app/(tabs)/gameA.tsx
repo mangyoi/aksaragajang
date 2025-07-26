@@ -215,7 +215,7 @@ const MatchingGameScreen: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isGameActive, setIsGameActive] = useState<boolean>(false);
   const [allLevelsCompleted, setAllLevelsCompleted] = useState<boolean>(false);
-
+  const [gameCompleted, setGameCompleted] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [modalTitle, setModalTitle] = useState<string>("");
   const [modalMessage, setModalMessage] = useState<string>("");
@@ -258,6 +258,14 @@ const MatchingGameScreen: React.FC = () => {
       await soundRef.current.unloadAsync();
       soundRef.current = null;
       setIsMusicPlaying(false);
+    }
+  };
+
+  const toggleMusic = async () => {
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    } else {
+      await playBackgroundMusic();
     }
   };
 
@@ -384,14 +392,6 @@ const MatchingGameScreen: React.FC = () => {
           setModalSecondaryButtonAction(undefined);
         }
 
-        // if (imageSource) {
-        //   setModalImage(imageSource);
-        // } else {
-        //   setModalImage(
-        //     require("../../assets/images/tampilan/AstronoutGameA.png")
-        //   );
-        // }
-
         setIsModalVisible(true);
       }
     }, 0);
@@ -477,13 +477,11 @@ const MatchingGameScreen: React.FC = () => {
     setGameStarted(true);
 
     initializeLevel(0);
-
     await playBackgroundMusic();
   };
 
   const handleLevelComplete = async () => {
     setIsGameActive(false);
-    
 
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -764,7 +762,6 @@ const MatchingGameScreen: React.FC = () => {
         message={modalMessage}
         primaryButtonText={modalPrimaryButtonText}
         primaryButtonAction={modalPrimaryButtonAction}
-        // imageSource={modalImage}
       />
 
       <NoLivesModal
@@ -776,28 +773,33 @@ const MatchingGameScreen: React.FC = () => {
 
       <View style={styles.header}>
         <Text style={styles.headerText}>Carakan</Text>
-
-        {/* {isGameActive && !allLevelsCompleted && (
-          // <TouchableOpacity 
-          //   style={styles.resetLevelButton}
-          //   onPress={() => initializeLevel(currentLevelIndex)}
-          // >
-          //   <Text style={styles.resetLevelText}>Reset Level</Text>
-          // </TouchableOpacity>
-        )} */}
       </View>
 
-      {/* Lives Display */}
+      {gameStarted && !gameCompleted && (
+        <TouchableOpacity
+          style={styles.musicFloatingButton}
+          onPress={toggleMusic}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={
+              isMusicPlaying
+                ? require("../../assets/images/tampilan/icon/sound.png")
+                : require("../../assets/images/tampilan/icon/no-sound.png")
+            }
+            style={{ width: 32, height: 32 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      )}
+
       <LivesDisplay gameKey={GAME_KEY} onLivesUpdated={handleLivesUpdated} />
 
       {!gameStarted ? (
-        // Show pre-game screen
         renderPreGameScreen()
       ) : allLevelsCompleted ? (
-        // Show completion screen
         renderCompletionScreen()
       ) : (
-        // Main game screen
         <>
           <View style={styles.gameInfoContainer}>
             <Text style={styles.gameTitle}>Nan Maenan</Text>
@@ -908,6 +910,20 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  musicFloatingButton: {
+    position: "absolute",
+    top: 117,
+    right: 24,
+    backgroundColor: "#FFF",
+    borderRadius: 24,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#1B4D89",
+    elevation: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 99,
   },
   gameInfoContainer: {
     alignItems: "center",

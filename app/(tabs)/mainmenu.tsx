@@ -255,7 +255,7 @@ const MainMenu = () => {
               <View style={styles.profileIconContainer}>
                 <Image
                   source={require("../../assets/images/tampilan/icon/user.png")}
-                  style={{ width: 25, height: 25,  }}
+                  style={{ width: 25, height: 25 }}
                 />
               </View>
             </View>
@@ -291,9 +291,17 @@ const MainMenu = () => {
           style={styles.materiCard}
           onPress={handleMateriNavigation}
         >
-          <Text style={styles.materiTitle}>Materi</Text>
-          <Text style={styles.materiSubtitle}>Kompolan Carakan</Text>
-          <Text style={styles.materiSubtitle}>Kalaban Sowara</Text>
+          <View style={styles.materiContent}>
+            <View>
+              <Text style={styles.materiTitle}>Materi</Text>
+              <Text style={styles.materiSubtitle}>Kompolan Carakan</Text>
+              <Text style={styles.materiSubtitle}>Kalaban Sowara</Text>
+            </View>
+            <Image
+              source={require("../../assets/images/tampilan/icon/materi.png")}
+              style={styles.materiIcon}
+            />
+          </View>
         </TouchableOpacity>
 
         <View style={styles.gridContainer}>
@@ -302,19 +310,35 @@ const MainMenu = () => {
               style={[styles.gridButton, styles.purpleButton]}
               onPress={() => router.push("/kuis")}
             >
-              <Text style={styles.buttonText}>Kuis</Text>
-              <Text style={styles.buttonSubtext}>
-                Kuis Kaangguy Ngokor Pangataoan
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={require("../../assets/images/tampilan/icon/brain.png")}
+                  style={styles.iconKuis}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.buttonText}>Kuis</Text>
+                  <Text style={styles.buttonSubtext}>
+                    Kuis Kaangguy Ngokor Pangataoan
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.gridButton, styles.purpleButton]}
               onPress={() => router.push("/gameA")}
             >
-              <Text style={styles.buttonText}>Mapadha</Text>
-              <Text style={styles.buttonSubtext}>
-                Nyocokagi Okara Kalaban Carakan
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={require("../../assets/images/tampilan/icon/connect.png")}
+                  style={styles.iconKuis}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.buttonText}>Mapadha</Text>
+                  <Text style={styles.buttonSubtext}>
+                    Nyocokagi Okara Kalaban Carakan
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
           <View style={styles.row}>
@@ -322,19 +346,35 @@ const MainMenu = () => {
               style={[styles.gridButton, styles.purpleButton]}
               onPress={() => router.push("/gameB")}
             >
-              <Text style={styles.buttonText}>Malengkap</Text>
-              <Text style={styles.buttonSubtext}>
-                Malengkap Aksara Se Elang
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={require("../../assets/images/tampilan/icon/choices.png")}
+                  style={styles.iconKuis}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.buttonText}>Malengkap</Text>
+                  <Text style={styles.buttonSubtext}>
+                    A lengkabi Okara Kalaban Carakan
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.gridButton, styles.purpleButton]}
               onPress={() => router.push("/gameC")}
             >
-              <Text style={styles.buttonText}>Nyoson</Text>
-              <Text style={styles.buttonSubtext}>
-                Nyoson Okara Kalaban Aksara
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={require("../../assets/images/tampilan/icon/puzzle.png")}
+                  style={styles.iconKuis}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.buttonText}>Nyoson</Text>
+                  <Text style={styles.buttonSubtext}>
+                    Nyoson Okara Kalaban Aksara
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -490,6 +530,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
   },
+  materiContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+  },
+  materiIcon: {
+    width: 200,
+    height: 90,
+    marginRight: -40,
+  },
+
   gridContainer: {
     flex: 1,
   },
@@ -508,6 +560,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#7E80D8",
     borderWidth: 2,
     borderColor: "#000000",
+  },
+  iconKuis: {
+    width: 32,
+    height: 32,
+    resizeMode: "contain",
+    left: 5,
+    marginRight: 5,
   },
   buttonText: {
     color: "#FFFFFF",

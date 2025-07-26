@@ -10,6 +10,16 @@ import {
   ScrollView,
   Modal,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import {
+  GestureDetector,
+  GestureHandlerRootView,
+  Gesture,
+} from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
 import LivesDisplay from "../../components/LivesDisplay";
 import NoLivesModal from "../../components/NoLivesModal";
@@ -18,7 +28,7 @@ import { Audio } from "expo-av";
 import { BackHandler } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const GAME_KEY = "nanmaenangame";
+const GAME_KEY = "malengkap";
 const manager = livesManager.getManager(GAME_KEY);
 
 interface AksaraOption {
@@ -41,6 +51,7 @@ const NanMaenanGameScreen: React.FC = () => {
   const router = useRouter();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [gameCompleted, setGameCompleted] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
@@ -55,6 +66,24 @@ const NanMaenanGameScreen: React.FC = () => {
   });
   const [showNoLivesModal, setShowNoLivesModal] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+
+  const posX = useSharedValue(24);
+  const posY = useSharedValue(110);
+
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: posX.value }, { translateY: posY.value }],
+  }));
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startX.value = posX.value;
+      startY.value = posY.value;
+    })
+    .onUpdate((e) => {
+      posX.value = startX.value + e.translationX;
+      posY.value = startY.value + e.translationY;
+    });
 
   const questions: Question[] = [
     {
@@ -253,11 +282,11 @@ const NanMaenanGameScreen: React.FC = () => {
       return;
     }
 
-    await playBackgroundMusic();
     setGameStarted(true);
     setCurrentQuestionIndex(0);
     setCorrectAnswers(0);
     setSelectedOption(null);
+    await playBackgroundMusic();
   };
 
   useEffect(() => {
@@ -310,10 +339,18 @@ const NanMaenanGameScreen: React.FC = () => {
     }
   };
 
-  const handleStart = () => {
-    console.log("Mulai permainan ditekan");
-    setGameStarted(true);
+  const toggleMusic = async () => {
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    } else {
+      await playBackgroundMusic();
+    }
   };
+
+  // const handleStart = () => {
+  //   console.log("Mulai permainan ditekan");
+  //   setGameStarted(true);
+  // };
   const handleOptionSelect = (optionId: number) => {
     if (!gameStarted) return;
     setSelectedOption(optionId);
@@ -402,6 +439,36 @@ const NanMaenanGameScreen: React.FC = () => {
       stopBackgroundMusic();
     };
   }, []);
+  const renderPreGameScreen = () => {
+    return (
+      <View style={styles.preGameContainer}>
+        <Text style={styles.gameTitle}>Nan Maenan</Text>
+
+        <TouchableOpacity
+          style={[
+            styles.startButton,
+            livesInfo.lives <= 0 && styles.disabledButton,
+          ]}
+          onPress={startGame}
+          disabled={livesInfo.lives <= 0}
+        >
+          <Text style={styles.startButtonText}>
+            Molai Permainan {livesInfo.lives <= 0 ? "(Nyaba Tadha')" : ""}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.startButton, styles.menuButton]}
+          onPress={() => {
+            stopBackgroundMusic();
+            router.push("/mainmenu");
+          }}
+        >
+          <Text style={styles.menuButtonText}> Abali ka Menu Utama </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -429,30 +496,8 @@ const NanMaenanGameScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.gameTitle}>Nan Maenan</Text>
-
         {!gameStarted ? (
-          <View style={styles.preGameContainer}>
-            <TouchableOpacity
-              style={[
-                styles.startButton,
-                livesInfo.lives <= 0 && styles.disabledButton,
-              ]}
-              onPress={startGame}
-              disabled={livesInfo.lives <= 0}
-            >
-              <Text style={styles.startButtonText}>
-                Molai Permainan {livesInfo.lives <= 0 ? "(Nyaba Tadha')" : ""}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.startButton, styles.menuButton]}
-              onPress={() => router.push("/mainmenu")}
-            >
-              <Text style={styles.menuButtonText}> Abali ka Menu Utama </Text>
-            </TouchableOpacity>
-          </View>
+          renderPreGameScreen()
         ) : (
           <>
             <View style={styles.mainSymbolContainer}>
@@ -509,6 +554,23 @@ const NanMaenanGameScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </>
+        )}
+        {gameStarted && !gameCompleted && (
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.musicFloatingButton, animatedStyle]}>
+              <TouchableOpacity onPress={toggleMusic} activeOpacity={0.7}>
+                <Image
+                  source={
+                    isMusicPlaying
+                      ? require("../../assets/images/tampilan/icon/sound.png")
+                      : require("../../assets/images/tampilan/icon/no-sound.png")
+                  }
+                  style={{ width: 32, height: 32 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          </GestureDetector>
         )}
 
         <View style={styles.bottomPadding} />
@@ -666,6 +728,18 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: "center",
     marginVertical: 15,
+  },
+  musicFloatingButton: {
+    position: "absolute",
+    backgroundColor: "#FFF",
+    borderRadius: 24,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#1B4D89",
+    elevation: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 99,
   },
   questionContainer: {
     alignItems: "center",

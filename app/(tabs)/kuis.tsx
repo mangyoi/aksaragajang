@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  StyleSheet, 
-  Image, 
-  ScrollView
-} from 'react-native';
-import { useRouter } from 'expo-router'; 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Modal,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+import { BackHandler } from "react-native";
 
 interface Answer {
   id: number;
@@ -23,126 +26,130 @@ interface Question {
 }
 
 const QuizScreen: React.FC = () => {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  
-  const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: number | null}>({});
-  
+
+  const [selectedAnswers, setSelectedAnswers] = useState<{
+    [key: number]: number | null;
+  }>({});
+
+  const [exitModalVisible, setExitModalVisible] = useState(false);
+
   const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
-  
+
   const [score, setScore] = useState<number>(0);
 
   const questions: Question[] = [
     {
       id: 1,
-      carakanText: 'ꦲꦫꦥ',
+      carakanText: "ꦲꦫꦥ",
       answers: [
-        { id: 1, text: 'Pamacana' },
-        { id: 2, text: 'Apana' },
-        { id: 3, text: 'Arapa' },
-        { id: 4, text: 'Anapa' }
+        { id: 1, text: "Pamacana" },
+        { id: 2, text: "Apana" },
+        { id: 3, text: "Arapa" },
+        { id: 4, text: "Anapa" },
       ],
-      correctAnswerId: 3
+      correctAnswerId: 3,
     },
     {
       id: 2,
-      carakanText: 'ꦥꦩꦕꦤ',
+      carakanText: "ꦥꦩꦕꦤ",
       answers: [
-        { id: 1, text: 'Arapa' },
-        { id: 2, text: 'Calana' },
-        { id: 3, text: 'Pamacana' },
-        { id: 4, text: 'Nagara' }
+        { id: 1, text: "Arapa" },
+        { id: 2, text: "Calana" },
+        { id: 3, text: "Pamacana" },
+        { id: 4, text: "Nagara" },
       ],
-      correctAnswerId: 3
+      correctAnswerId: 3,
     },
     {
       id: 3,
-      carakanText: 'ꦚꦩꦤ',
+      carakanText: "ꦚꦩꦤ",
       answers: [
-        { id: 1, text: 'Nyamana' },
-        { id: 2, text: 'Sapana' },
-        { id: 3, text: 'Nagara' },
-        { id: 4, text: 'Pamacana' }
+        { id: 1, text: "Nyamana" },
+        { id: 2, text: "Sapana" },
+        { id: 3, text: "Nagara" },
+        { id: 4, text: "Pamacana" },
       ],
-      correctAnswerId: 1
+      correctAnswerId: 1,
     },
     {
       id: 4,
-      carakanText: 'ꦱꦥꦤ',
+      carakanText: "ꦱꦥꦤ",
       answers: [
-        { id: 1, text: 'Arapa' },
-        { id: 2, text: 'Sapana' },
-        { id: 3, text: 'Pamacana' },
-        { id: 4, text: 'Nyamana' }
+        { id: 1, text: "Arapa" },
+        { id: 2, text: "Sapana" },
+        { id: 3, text: "Pamacana" },
+        { id: 4, text: "Nyamana" },
       ],
-      correctAnswerId: 2
+      correctAnswerId: 2,
     },
     {
       id: 5,
-      carakanText: 'ꦲꦤꦥ',
+      carakanText: "ꦲꦤꦥ",
       answers: [
-        { id: 1, text: 'Anapa' },
-        { id: 2, text: 'Arapa' },
-        { id: 3, text: 'Atapa' },
-        { id: 4, text: 'Apasa' }
+        { id: 1, text: "Anapa" },
+        { id: 2, text: "Arapa" },
+        { id: 3, text: "Atapa" },
+        { id: 4, text: "Apasa" },
       ],
-      correctAnswerId: 1
+      correctAnswerId: 1,
     },
     {
       id: 6,
-      carakanText: 'ꦱꦺꦴꦏꦺꦴꦤ',
+      carakanText: "ꦱꦺꦴꦏꦺꦴꦤ",
       answers: [
-        { id: 1, text: 'Contona' },
-        { id: 2, text: 'Sokona' },
-        { id: 3, text: 'Gulana' },
-        { id: 4, text: 'Ropana' }
+        { id: 1, text: "Contona" },
+        { id: 2, text: "Sokona" },
+        { id: 3, text: "Gulana" },
+        { id: 4, text: "Ropana" },
       ],
-      correctAnswerId: 2
+      correctAnswerId: 2,
     },
     {
       id: 7,
-      carakanText: 'ꦏꦺꦴꦏꦺꦴꦤ',
+      carakanText: "ꦏꦺꦴꦏꦺꦴꦤ",
       answers: [
-        { id: 1, text: 'Sokona' },
-        { id: 2, text: 'Kokona' },
-        { id: 3, text: 'Gulana' },
-        { id: 4, text: 'Contona' }
+        { id: 1, text: "Sokona" },
+        { id: 2, text: "Kokona" },
+        { id: 3, text: "Gulana" },
+        { id: 4, text: "Contona" },
       ],
-      correctAnswerId: 2
+      correctAnswerId: 2,
     },
     {
       id: 8,
-      carakanText: 'ꦱꦭꦗ',
+      carakanText: "ꦱꦭꦗ",
       answers: [
-        { id: 1, text: 'Jakaja' },
-        { id: 2, text: 'Apana' },
-        { id: 3, text: 'Salaja' },
-        { id: 4, text: 'Sangaja' }
+        { id: 1, text: "Jakaja" },
+        { id: 2, text: "Apana" },
+        { id: 3, text: "Salaja" },
+        { id: 4, text: "Sangaja" },
       ],
-      correctAnswerId: 3
+      correctAnswerId: 3,
     },
     {
       id: 9,
-      carakanText: 'ꦲꦱꦏꦺꦴꦭ',
+      carakanText: "ꦲꦱꦏꦺꦴꦭ",
       answers: [
-        { id: 1, text: 'Akaca' },
-        { id: 2, text: 'Sakola' },
-        { id: 3, text: 'Pokola' },
-        { id: 4, text: 'Asakola' }
+        { id: 1, text: "Akaca" },
+        { id: 2, text: "Sakola" },
+        { id: 3, text: "Pokola" },
+        { id: 4, text: "Asakola" },
       ],
-      correctAnswerId: 4
+      correctAnswerId: 4,
     },
     {
       id: 10,
-      carakanText: 'ꦲꦏꦕ',
+      carakanText: "ꦲꦏꦕ",
       answers: [
-        { id: 1, text: 'Akaca' },
-        { id: 2, text: 'Saga' },
-        { id: 3, text: 'Sango' },
-        { id: 4, text: 'Pana' }
+        { id: 1, text: "Akaca" },
+        { id: 2, text: "Saga" },
+        { id: 3, text: "Sango" },
+        { id: 4, text: "Pana" },
       ],
-      correctAnswerId: 1
-    }
+      correctAnswerId: 1,
+    },
   ];
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -150,7 +157,7 @@ const QuizScreen: React.FC = () => {
   const handleAnswerSelect = (questionId: number, answerId: number) => {
     setSelectedAnswers({
       ...selectedAnswers,
-      [questionId]: answerId
+      [questionId]: answerId,
     });
   };
 
@@ -172,15 +179,21 @@ const QuizScreen: React.FC = () => {
 
   const calculateScore = () => {
     let totalScore = 0;
-    
-    questions.forEach(question => {
-      if (selectedAnswers[question.id] === question.correctAnswerId) {
-        totalScore += 1;
+    let answeredCount = 0;
+
+    questions.forEach((question) => {
+      const answer = selectedAnswers[question.id];
+      if (answer !== undefined) {
+        answeredCount += 1;
+        if (answer === question.correctAnswerId) {
+          totalScore += 1;
+        }
       }
     });
-    
+
     setScore(totalScore);
     setQuizCompleted(true);
+    // bisa juga set totalAnswered(answeredCount) kalau mau ditampilkan
   };
 
   const restartQuiz = () => {
@@ -192,11 +205,32 @@ const QuizScreen: React.FC = () => {
 
   // Fungsi untuk kembali ke menu utama
   const goToMainMenu = () => {
-    router.push('/mainmenu');
+    router.push("/mainmenu");
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        if (!quizCompleted) {
+          setExitModalVisible(true);
+          return true;
+        }
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [quizCompleted])
+  );
+
   const allQuestionsAnswered = () => {
-    return questions.every(question => selectedAnswers[question.id] !== undefined);
+    return questions.every(
+      (question) => selectedAnswers[question.id] !== undefined
+    );
   };
 
   if (quizCompleted) {
@@ -205,37 +239,38 @@ const QuizScreen: React.FC = () => {
         <View style={styles.header}>
           <Text style={styles.headerText}>Carakan</Text>
         </View>
-        
+
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsTitle}>Hasel Kuis</Text>
-          <Text style={styles.scoreText}>Skor Anda: {score} dari {questions.length}</Text>
-          
+          <Text style={styles.scoreText}>
+            Skor Anda: {score} dari {questions.length}
+          </Text>
+
           <View style={styles.questionSummary}>
             {questions.map((question, index) => (
               <View key={question.id} style={styles.summaryItem}>
                 <Text style={styles.summaryText}>
-                  Soal {index + 1}: {selectedAnswers[question.id] === question.correctAnswerId ? 
-                    '✓' : '✗'}
+                  Soal {index + 1}:{" "}
+                  {selectedAnswers[question.id] === question.correctAnswerId
+                    ? "✓"
+                    : "✗"}
                 </Text>
               </View>
             ))}
           </View>
-          
-          <TouchableOpacity 
-            style={styles.restartButton}
-            onPress={restartQuiz}
-          >
+
+          <TouchableOpacity style={styles.restartButton} onPress={restartQuiz}>
             <Text style={styles.restartButtonText}>Molai Pole</Text>
           </TouchableOpacity>
-          
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.mainMenuButton}
             onPress={goToMainMenu}
           >
             <Text style={styles.mainMenuButtonText}>Abali ka Menu Utama</Text>
           </TouchableOpacity>
         </View>
+        
       </SafeAreaView>
     );
   }
@@ -251,11 +286,15 @@ const QuizScreen: React.FC = () => {
           Soal {currentQuestionIndex + 1} dari {questions.length}
         </Text>
         <View style={styles.progressBar}>
-          <View 
+          <View
             style={[
-              styles.progressFill, 
-              { width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }
-            ]} 
+              styles.progressFill,
+              {
+                width: `${
+                  ((currentQuestionIndex + 1) / questions.length) * 100
+                }%`,
+              },
+            ]}
           />
         </View>
       </View>
@@ -265,9 +304,9 @@ const QuizScreen: React.FC = () => {
       </View>
 
       <ScrollView style={styles.contentContainer}>
-        <Image 
-          source={require('../../assets/images/tampilan/AstronoutQuis.png')} 
-          style={styles.questionImage} 
+        <Image
+          source={require("../../assets/images/tampilan/AstronoutQuis.png")}
+          style={styles.questionImage}
           resizeMode="contain"
         />
         <View style={styles.answersContainer}>
@@ -276,7 +315,8 @@ const QuizScreen: React.FC = () => {
               key={answer.id}
               style={[
                 styles.answerButton,
-                getCurrentSelectedAnswer() === answer.id && styles.selectedAnswerButton
+                getCurrentSelectedAnswer() === answer.id &&
+                  styles.selectedAnswerButton,
               ]}
               onPress={() => handleAnswerSelect(currentQuestion.id, answer.id)}
             >
@@ -287,8 +327,11 @@ const QuizScreen: React.FC = () => {
       </ScrollView>
 
       <View style={styles.bottomButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.navButton, currentQuestionIndex === 0 && styles.disabledButton]}
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            currentQuestionIndex === 0 && styles.disabledButton,
+          ]}
           onPress={handlePrevQuestion}
           disabled={currentQuestionIndex === 0}
         >
@@ -296,15 +339,18 @@ const QuizScreen: React.FC = () => {
         </TouchableOpacity>
 
         {currentQuestionIndex === questions.length - 1 ? (
-          <TouchableOpacity 
-            style={[styles.submitButton, !allQuestionsAnswered() && styles.disabledButton]}
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              !allQuestionsAnswered() && styles.disabledButton,
+            ]}
             onPress={calculateScore}
             disabled={!allQuestionsAnswered()}
           >
             <Text style={styles.submitButtonText}>Mare</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.navButton}
             onPress={handleNextQuestion}
           >
@@ -321,11 +367,42 @@ const QuizScreen: React.FC = () => {
             style={[
               styles.dot,
               currentQuestionIndex === index && styles.activeDot,
-              selectedAnswers[question.id] !== undefined && styles.answeredDot
+              selectedAnswers[question.id] !== undefined && styles.answeredDot,
             ]}
           />
         ))}
       </View>
+      {exitModalVisible && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Keluar dari Kuis?</Text>
+              <Text style={styles.modalMessage}>
+                Jawaban yang sudah kamu isi akan langsung dinilai.
+              </Text>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.modalCancel}
+                  onPress={() => setExitModalVisible(false)}
+                >
+                  <Text style={styles.modalCancelText}>Batal</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalConfirm}
+                  onPress={() => {
+                    setExitModalVisible(false);
+                    calculateScore();
+                  }}
+                >
+                  <Text style={styles.modalConfirmText}>
+                    Ya, Nilai Sekarang
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
     </SafeAreaView>
   );
 };
@@ -333,78 +410,78 @@ const QuizScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
   },
   header: {
-    backgroundColor: '#F7DA30',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: "#F7DA30",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   headerText: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1B4D89',
+    fontWeight: "bold",
+    color: "#1B4D89",
   },
   progressContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#f0f0f0'
+    backgroundColor: "#f0f0f0",
   },
   progressText: {
     fontSize: 14,
-    color: '#1B4D89',
-    marginBottom: 4
+    color: "#1B4D89",
+    marginBottom: 4,
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     borderRadius: 4,
-    overflow: 'hidden'
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#4D5BD1',
-    borderRadius: 4
+    height: "100%",
+    backgroundColor: "#4D5BD1",
+    borderRadius: 4,
   },
   carakanContainer: {
     marginTop: 20,
-    backgroundColor: '#7E80D8',
+    backgroundColor: "#7E80D8",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,
     marginHorizontal: 16,
-    alignItems: 'center'
+    alignItems: "center",
   },
   carakanText: {
-    color: 'white',
+    color: "white",
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   questionImage: {
-    alignSelf: 'center',
-    width: '100%',
+    alignSelf: "center",
+    width: "100%",
     height: 150,
-    marginVertical: 16
+    marginVertical: 16,
   },
   answersContainer: {
     gap: 12,
-    marginBottom: 20
+    marginBottom: 20,
   },
   answerButton: {
-    backgroundColor: '#7E80D8',
+    backgroundColor: "#7E80D8",
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: '#000000',
-    shadowColor: '#000',
+    borderColor: "#000000",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -414,10 +491,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   selectedAnswerButton: {
-    backgroundColor: '#4D5BD1',
-    borderColor: '#1E3A8A',
+    backgroundColor: "#4D5BD1",
+    borderColor: "#1E3A8A",
     borderWidth: 3,
-    shadowColor: '#1E3A8A',
+    shadowColor: "#1E3A8A",
     shadowOffset: {
       width: 0,
       height: 3,
@@ -430,41 +507,41 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   answerButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   bottomButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 16,
-    paddingTop: 8
+    paddingTop: 8,
   },
   navButton: {
-    backgroundColor: '#4D5BD1',
+    backgroundColor: "#4D5BD1",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignItems: 'center',
-    width: '48%',
+    alignItems: "center",
+    width: "48%",
     borderWidth: 1,
-    borderColor: '#1E3A8A',
+    borderColor: "#1E3A8A",
   },
   navButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   submitButton: {
-    backgroundColor: '#1E3A8A',
+    backgroundColor: "#1E3A8A",
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
-    width: '48%',
+    alignItems: "center",
+    width: "48%",
     borderWidth: 2,
-    borderColor: '#4D5BD1',
-    shadowColor: '#000',
+    borderColor: "#4D5BD1",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -474,99 +551,159 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   submitButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     paddingBottom: 16,
     paddingTop: 8,
-    gap: 8
+    gap: 8,
   },
   dot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     borderWidth: 1,
-    borderColor: '#AAAAAA',
+    borderColor: "#AAAAAA",
   },
   activeDot: {
-    backgroundColor: '#4D5BD1',
-    borderColor: '#1E3A8A',
+    backgroundColor: "#4D5BD1",
+    borderColor: "#1E3A8A",
     width: 12,
     height: 12,
     borderRadius: 6,
   },
   answeredDot: {
-    backgroundColor: '#A3AED0',
-    borderColor: '#7E80D8',
+    backgroundColor: "#A3AED0",
+    borderColor: "#7E80D8",
   },
   resultsContainer: {
     flex: 1,
     padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center'
+    alignItems: "center",
+    justifyContent: "center",
   },
   resultsTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B4D89',
+    fontWeight: "bold",
+    color: "#1B4D89",
     marginBottom: 16,
   },
   scoreText: {
     fontSize: 20,
     marginBottom: 24,
-    color: '#1B4D89',
+    color: "#1B4D89",
   },
   questionSummary: {
-    width: '100%',
+    width: "100%",
     marginBottom: 24,
   },
   summaryItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
   },
   summaryText: {
     fontSize: 16,
   },
   restartButton: {
-    backgroundColor: '#F7DA30',
+    backgroundColor: "#F7DA30",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: '#1B4D89',
+    borderColor: "#1B4D89",
     marginTop: 16,
-    width: '80%',
+    width: "80%",
   },
   restartButtonText: {
-    color: '#1B4D89',
+    color: "#1B4D89",
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   // Tambahkan style untuk tombol menu utama
   mainMenuButton: {
-    backgroundColor: '#7E80D8',
+    backgroundColor: "#7E80D8",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: '#1B4D89',
+    borderColor: "#1B4D89",
     marginTop: 16,
-    width: '80%',
+    width: "80%",
   },
   mainMenuButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold'
-  }
+    fontWeight: "bold",
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+    borderColor: "#DC3C22",
+    borderWidth: 2,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#1B4D89",
+  },
+  modalMessage: {
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 10,
+  },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: "#DC3C22",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  modalConfirm: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: "#4D5BD1",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalConfirmText: {
+    color: "white",
+    fontWeight: "bold",
+  },
 });
 
 export default QuizScreen;

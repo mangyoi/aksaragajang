@@ -280,9 +280,9 @@ const DragDropGameScreen = () => {
   useEffect(() => {
     const backAction = () => {
       stopBackgroundMusic().then(() => {
-        router.push("/mainmenu"); 
+        router.push("/mainmenu");
       });
-      return true; 
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -416,6 +416,14 @@ const DragDropGameScreen = () => {
       }
     } catch (error) {
       console.error("Gagal menghentikan musik:", error);
+    }
+  };
+
+  const toggleMusic = async () => {
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    } else {
+      await playBackgroundMusic();
     }
   };
 
@@ -787,10 +795,7 @@ const DragDropGameScreen = () => {
           )}
         </View>
 
-        <LivesDisplay
-          onLivesUpdated={handleLivesUpdated}
-          livesInfo={livesInfo}
-        />
+        <LivesDisplay gameKey={GAME_KEY} onLivesUpdated={handleLivesUpdated} />
 
         <NoLivesModal
           visible={showNoLivesModal}
@@ -798,6 +803,24 @@ const DragDropGameScreen = () => {
           onGoHome={handleNoLivesGoHome}
           timeUntilNextLife={livesInfo.timeUntilNextLife}
         />
+
+        {gameStarted && !gameCompleted && (
+          <TouchableOpacity
+            style={styles.musicFloatingButton}
+            onPress={toggleMusic}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={
+                isMusicPlaying
+                  ? require("../../assets/images/tampilan/icon/sound.png")
+                  : require("../../assets/images/tampilan/icon/no-sound.png")
+              }
+              style={{ width: 32, height: 32 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        )}
 
         {!gameStarted ? (
           renderPreGameScreen()
@@ -909,11 +932,36 @@ const styles = StyleSheet.create({
     color: "#1B4D89",
     marginBottom: 10,
   },
+  musicButton: {
+    marginLeft: 12,
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#1B4D89",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   preGameContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     width: "80%",
+  },
+
+  musicFloatingButton: {
+    position: "absolute",
+    top: 110, 
+    right: 24, 
+    backgroundColor: "#FFF",
+    borderRadius: 24,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#1B4D89",
+    elevation: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 99, 
   },
   instructionText: {
     fontSize: 16,

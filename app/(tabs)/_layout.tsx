@@ -1,6 +1,7 @@
 import { Stack, useRouter, usePathname } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function Layout() {
   const router = useRouter();
@@ -24,11 +25,13 @@ export default function Layout() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Stack screenOptions={{ headerShown: false }} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Stack screenOptions={{ headerShown: false }} />
+        </View>
       </View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
