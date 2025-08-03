@@ -271,10 +271,25 @@ const MatchingGameScreen: React.FC = () => {
 
   useEffect(() => {
     const backAction = () => {
-      stopBackgroundMusic().then(() => {
-        router.push("/mainmenu");
-      });
-      return true;
+      setIsGameActive(false);
+      setIsModalVisible(false);
+      setShowLivesDeductionModal(false);
+
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      stopBackgroundMusic();
+
+      router.replace("/mainmenu");
+
+      return true; 
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -793,7 +808,11 @@ const MatchingGameScreen: React.FC = () => {
         </TouchableOpacity>
       )}
 
-      <LivesDisplay gameKey={GAME_KEY} onLivesUpdated={handleLivesUpdated} />
+      <LivesDisplay
+        key={livesInfo.lives}
+        gameKey={GAME_KEY}
+        onLivesUpdated={handleLivesUpdated}
+      />
 
       {!gameStarted ? (
         renderPreGameScreen()

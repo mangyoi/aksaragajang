@@ -317,9 +317,7 @@ const MainMenu = () => {
                 />
                 <View style={{ marginLeft: 10 }}>
                   <Text style={styles.buttonText}>Kuis</Text>
-                  <Text style={styles.buttonSubtext}>
-                    Kuis Kaangguy Ngokor Pangataoan
-                  </Text>
+                  
                 </View>
               </View>
             </TouchableOpacity>
@@ -334,9 +332,7 @@ const MainMenu = () => {
                 />
                 <View style={{ marginLeft: 10 }}>
                   <Text style={styles.buttonText}>Mapadha</Text>
-                  <Text style={styles.buttonSubtext}>
-                    Nyocokagi Okara Kalaban Carakan
-                  </Text>
+                  
                 </View>
               </View>
             </TouchableOpacity>
@@ -353,9 +349,7 @@ const MainMenu = () => {
                 />
                 <View style={{ marginLeft: 10 }}>
                   <Text style={styles.buttonText}>Malengkap</Text>
-                  <Text style={styles.buttonSubtext}>
-                    A lengkabi Okara Kalaban Carakan
-                  </Text>
+                  
                 </View>
               </View>
             </TouchableOpacity>
@@ -370,9 +364,6 @@ const MainMenu = () => {
                 />
                 <View style={{ marginLeft: 10 }}>
                   <Text style={styles.buttonText}>Nyoson</Text>
-                  <Text style={styles.buttonSubtext}>
-                    Nyoson Okara Kalaban Aksara
-                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -574,10 +565,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 5,
   },
-  buttonSubtext: {
-    color: "#FFFFFF",
-    fontSize: 12,
-  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
