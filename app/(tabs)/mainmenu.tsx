@@ -41,7 +41,7 @@ const MainMenu = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setBannerIndex((prev) => (prev + 1) % bannerImages.length);
-    }, 3000); // auto scroll setiap 3 detik
+    }, 3000); 
 
     return () => clearInterval(interval);
   }, [bannerImages.length]);
@@ -94,14 +94,12 @@ const MainMenu = () => {
         const endTime = new Date().getTime();
         const timeSpentSeconds = Math.floor((endTime - startTime) / 1000);
 
-        // Save the time spent
         const today = new Date().toDateString();
         const storedStreakData = await AsyncStorage.getItem("userStreakData");
 
         if (storedStreakData) {
           const parsedData = JSON.parse(storedStreakData) as StreakData;
 
-          // Update material time spent for today
           const updatedData: StreakData = {
             ...parsedData,
             lastMaterialAccess: new Date().toISOString(),

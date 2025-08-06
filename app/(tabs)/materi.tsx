@@ -52,10 +52,7 @@ const sowaraData: SowaraItem[] = [
     id: "2",
     imageSource: require("../../assets/images/tampilan/aksara/na.png"),
   },
-  // {
-  //   id: "3",
-  //   imageSource: require("../../assets/images/tampilan/aksara/ca.png"),
-  // },
+
   {
     id: "4",
     imageSource: null,
@@ -141,14 +138,7 @@ const CarakanApp = () => {
       console.warn("Error playing sound:", error);
     }
   };
-  //   useEffect(() => {
-  //   Audio.setAudioModeAsync({
-  //     playsInSilentModeIOS: true,
-  //     staysActiveInBackground: false,
-  //     shouldDuckAndroid: true,
-  //     playThroughEarpieceAndroid: false,
-  //   });
-  // }, []);
+
   useEffect(() => {
     startTimeRef.current = new Date();
     console.log("Started tracking time at:", startTimeRef.current);

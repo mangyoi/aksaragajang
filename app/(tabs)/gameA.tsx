@@ -55,7 +55,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
   primaryButtonAction,
   secondaryButtonText,
   secondaryButtonAction,
-  // imageSource,
   onClose,
 }) => {
   const memoizedPrimaryAction = React.useCallback(() => {
@@ -76,7 +75,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          {/* Tombol Close */}
           {onClose && (
             <TouchableOpacity style={styles.modalCloseButton} onPress={onClose}>
               <Text style={styles.modalCloseText}>×</Text>
@@ -385,7 +383,6 @@ const MatchingGameScreen: React.FC = () => {
     primaryButtonAction: () => void,
     secondaryButtonText?: string,
     secondaryButtonAction?: () => void
-    // imageSource?: any
   ) => {
     if (!isMounted.current) return;
 
@@ -481,7 +478,6 @@ const MatchingGameScreen: React.FC = () => {
     setTimeRemaining(level.timeLimit);
     setIsGameActive(true);
     setAllLevelsCompleted(false);
-    // setGameStarted(false);
   };
 
   const startGame = async () => {
